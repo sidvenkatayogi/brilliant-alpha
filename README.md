@@ -1,0 +1,1 @@
+clone of brilliant (learning app) for alpha ai, centered on learning stats/probability
