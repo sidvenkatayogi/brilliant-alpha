@@ -1,0 +1,80 @@
+{
+  "id": "combining-events",
+  "order": 2,
+  "title": "Combining Events",
+  "subtitle": "AND, OR, and independence",
+  "realWorldHook": "A jet's three hydraulic systems each fail on 1 in 1,000 flights — yet all three failing at once is about 1 in a billion.",
+  "conceptSummary": "Independent chances multiply for AND; overlapping chances must avoid double-counting for OR.",
+  "estimatedMinutes": 5,
+  "steps": [
+    {
+      "id": "hook",
+      "type": "concept",
+      "title": "Why redundancy works",
+      "body": "A passenger jet carries multiple [[independent|Two events are independent when one happening tells you nothing about the other — like two separate systems, or two separate dice. For independent events, the chance they *all* happen is the product of their individual chances.]] hydraulic systems. If one fails on 1 in 1,000 flights, the chance *all three* fail at once is about 1 in a billion — because independent chances multiply.\n\nThat's why redundancy works, and why 'and' and 'or' behave so differently. Let's see it as area."
+    },
+    {
+      "id": "concept-area",
+      "type": "concept",
+      "title": "Probability as area",
+      "body": "Picture every possible outcome as points filling a square — total area 1. Event **A** is a vertical band whose width is P(A); event **B** is a horizontal band whose height is P(B).\n\n[[AND|The chance that *both* events happen at once. For independent events you multiply the two probabilities — on the square it's the rectangle where the two bands cross.]] is where the bands cross — a rectangle. For independent events its area is width × height = P(A) × P(B).\n\n[[OR|The chance that *at least one* event happens. You add the two probabilities, then subtract the crossing rectangle so it isn't counted twice.]] is everything either band covers — but the crossing rectangle sits in both, so you subtract it once.",
+      "visual": { "type": "probabilityArea", "interactive": false, "props": { "mode": "and", "pA": 0.5, "pB": 0.4 } }
+    },
+    {
+      "id": "predict-and",
+      "type": "predict",
+      "prompt": "Two independent events: A happens 50% of the time, B happens 40%. What's the chance they *both* happen?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "a", "label": "90% — add them" },
+        { "id": "b", "label": "45% — average them" },
+        { "id": "c", "label": "20% — multiply them" }
+      ],
+      "revealMessage": "For independent events you multiply: 50% × 40% = 20%. Let's see why that's the crossing rectangle.",
+      "revealByOption": {
+        "a": "Adding (90%) is the OR move — and it even double-counts, which is coming up. For 'both at once' you multiply.",
+        "b": "Averaging isn't it. Independent ANDs multiply: 50% × 40% = 20% — a fraction of a fraction.",
+        "c": "Exactly — independent chances multiply: 50% × 40% = 20%. Watch it become a rectangle."
+      }
+    },
+    {
+      "id": "explore-and",
+      "type": "interactive",
+      "prompt": "Drag the corner. The bright rectangle where the bands cross *is* P(A and B) — its area is width × height. Shrink either band and the overlap shrinks faster: that's why stacking independent chances makes 'both' rare.",
+      "widget": { "type": "probabilityArea", "props": { "mode": "and", "pA": 0.5, "pB": 0.4 } }
+    },
+    {
+      "id": "explore-or",
+      "type": "interactive",
+      "prompt": "Now OR — at least one. The L-shape is everything either band covers. Adding P(A) + P(B) counts the crossing rectangle twice, so it's marked to subtract once: P(A or B) = P(A) + P(B) − P(A and B).",
+      "widget": { "type": "probabilityArea", "props": { "mode": "or", "pA": 0.5, "pB": 0.4 } }
+    },
+    {
+      "id": "q-overlap",
+      "type": "question",
+      "prompt": "With P(A) = 50% and P(B) = 40%, adding gives 90% — but the true P(A or B) is 70%. Why does adding overshoot?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "a", "label": "The 20% where A and B both happen is inside each band, so adding counts it twice" },
+        { "id": "b", "label": "A and B can never happen at the same time" },
+        { "id": "c", "label": "The events aren't independent" }
+      ],
+      "answer": { "correctOptionId": "a" },
+      "feedback": {
+        "correct": "Exactly — the crossing rectangle is P(A)×P(B) = 20%. It lives in both bands, so adding counts it twice; subtract it once and you land at 70%.",
+        "incorrect": "Look at the crossing rectangle — the part in *both* bands. Adding 50% + 40% counts that slice twice, which is how you sail past the true 70%.",
+        "byOption": {
+          "b": "They can — that's the whole 20% overlap rectangle where both happen at once. That shared slice is exactly what gets double-counted.",
+          "c": "Independence is fine here — even independent events overlap. That overlap (20%) is precisely the part adding counts twice."
+        }
+      },
+      "hint": "How big is the bright overlap rectangle, and how many times does 'just add' count it?"
+    },
+    {
+      "id": "summary",
+      "type": "concept",
+      "title": "AND multiplies, OR adds-then-trims",
+      "body": "For independent events, AND multiplies — which is why stacking three rare failures makes catastrophe astronomically unlikely.\n\nOR adds, but you subtract [[the overlap|The crossing rectangle that belongs to *both* events. Add the two probabilities and you count it twice, so you subtract it once to get the true OR.]] so nothing is counted twice.\n\nNext: what happens to a probability once you *know* something."
+    }
+  ]
+}

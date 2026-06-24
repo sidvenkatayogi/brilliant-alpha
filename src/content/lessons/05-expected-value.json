@@ -1,0 +1,76 @@
+{
+  "id": "expected-value",
+  "order": 5,
+  "title": "Expected Value & Why the House Wins",
+  "subtitle": "The quiet number behind every casino",
+  "realWorldHook": "A roulette bet pays 35-to-1 and feels like a jackpot waiting to happen. Over time it bleeds you at a steady, mathematically guaranteed rate.",
+  "conceptSummary": "Expected value = Σ(outcome × probability). A negative-EV game can feel winnable and still drain you.",
+  "estimatedMinutes": 5,
+  "steps": [
+    {
+      "id": "hook",
+      "type": "concept",
+      "title": "The jackpot that isn't",
+      "body": "A roulette bet on a single number pays [[35-to-1|If you win, you collect 35 dollars for every 1 you bet. It sounds huge — but the number only lands about 1 spin in 38, less often than the payout makes it feel.]] and feels like a jackpot waiting to happen.\n\nBut over time it bleeds you at a steady, mathematically guaranteed rate. Casinos, lotteries, and insurers all run on the same quiet number: [[expected value|The average result per play if you repeated the bet forever, each outcome weighted by its chance. A *negative* expected value means a slow, guaranteed drain over time.]].\n\nLearn to compute it and you can see the leak in any bet."
+    },
+    {
+      "id": "concept-ev",
+      "type": "concept",
+      "title": "What expected value is",
+      "body": "Expected value (EV) is the average outcome per play, weighting each result by its probability:\n\n**EV = Σ (outcome × probability)**\n\nBet $1 on a single roulette number. You win $35 with probability 1/38 and lose $1 with probability 37/38. EV ≈ −$0.05 per dollar. Every spin, on average, hands the house its [[house edge|The small average loss baked into every bet — here about 5 cents per dollar. It's how a casino profits with near-certainty even though any single spin is unpredictable.]]."
+    },
+    {
+      "id": "predict-trajectory",
+      "type": "predict",
+      "prompt": "You start with $100 and make this negative-EV bet 100 times. Where do you end up?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "a", "label": "Up — big payouts will hit" },
+        { "id": "b", "label": "Could be up or down short-term, but trending down" },
+        { "id": "c", "label": "Exactly back to $100" }
+      ],
+      "revealMessage": "Let's play it out and watch the bankroll trajectory.",
+      "revealByOption": {
+        "a": "It can happen short-term — variance is real and a big payout might land. But the long-run pull is downward. Let's watch the two fight it out.",
+        "b": "That's exactly the right mental model — variance up close, a downward trend over time. Let's watch it play out.",
+        "c": "It almost never lands exactly even — and the drift is downward, not flat. Let's play and see."
+      }
+    },
+    {
+      "id": "explore-betting",
+      "type": "interactive",
+      "prompt": "Run 300 gamblers at once. Their bankrolls fan out — a lucky few spike, most bleed — while the bold average line tracks the true EV trend and the histogram below shows where everyone actually ends up. Slide the payout to a fair wheel and watch the crowd recenter on $100.",
+      "widget": {
+        "type": "evBettingGame",
+        "props": { "startingBankroll": 100, "payout": 35, "winProbability": 0.0263, "players": 300 }
+      }
+    },
+    {
+      "id": "q-variance",
+      "type": "question",
+      "prompt": "A handful of the 300 gamblers finished ahead, but the average line slid steadily below $100. What does that tell you?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "a", "label": "Variance can put you ahead short-term, but negative EV wins out over time" },
+        { "id": "b", "label": "The game is actually fair" },
+        { "id": "c", "label": "You'll win if you just keep playing longer" }
+      ],
+      "answer": { "correctOptionId": "a" },
+      "feedback": {
+        "correct": "Exactly. Being up early is variance — noise. The EV is negative, so the more you play, the more certainly you trend down. The house doesn't need every round, just the average.",
+        "incorrect": "Look at the EV line versus your bankroll. The bankroll wiggles around, but the trend follows the negative EV downward.",
+        "byOption": {
+          "b": "It isn't fair — a fair game has EV = 0. Here EV is negative, which is precisely why it drifts down.",
+          "c": "Playing longer makes it *worse*, not better — more plays means the average converges to the negative EV. That's the casino's edge."
+        }
+      },
+      "hint": "Short-term swings are variance; the long-term direction is set by the sign of the EV."
+    },
+    {
+      "id": "summary",
+      "type": "concept",
+      "title": "Find the leak",
+      "body": "You might be up right now — [[variance|How much individual results swing around the average. High variance is why you can be ahead short-term even in a losing game — but it washes out over many plays.]] does that. But when EV is negative, the more you play, the more certainly you trend down.\n\nThe house doesn't need to win every round; it needs the average. Compute the EV of any bet, contract, or gamble and you can see the leak before you step in.\n\nThat's the long run — the thread running through all five lessons."
+    }
+  ]
+}

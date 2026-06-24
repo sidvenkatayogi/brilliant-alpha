@@ -1,0 +1,30 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env.local
+.env.*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Firebase
+.firebase
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Test output
+coverage
+playwright-report
+test-results
+
+# tsc -b composite build artifacts (from compiling the *.config.ts files)
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+playwright.config.js
+playwright.config.d.ts

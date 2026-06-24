@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-slate-50 text-ink antialiased;
+    /* Prevent rubber-band scroll fighting the canvas widgets on mobile. */
+    overscroll-behavior-y: contain;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-3 font-semibold
+           transition active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none
+           min-h-[44px] select-none;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-soft;
+  }
+  .btn-ghost {
+    @apply btn bg-white text-ink ring-1 ring-slate-200 hover:bg-slate-50;
+  }
+  .card {
+    @apply rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100;
+  }
+  /* Finger-friendly range inputs used across the interactive widgets. */
+  .range {
+    @apply h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-accent;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

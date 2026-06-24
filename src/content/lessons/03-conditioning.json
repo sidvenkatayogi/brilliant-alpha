@@ -1,0 +1,73 @@
+{
+  "id": "conditioning",
+  "order": 3,
+  "title": "Conditioning",
+  "subtitle": "P(A given B): updating on what you know",
+  "realWorldHook": "Every spam filter and every 'customers who bought this also bought…' runs on conditioning — updating a probability once you know something.",
+  "conceptSummary": "Conditioning on B shrinks the world to B, then recounts how often A happens inside it.",
+  "estimatedMinutes": 5,
+  "steps": [
+    {
+      "id": "hook",
+      "type": "concept",
+      "title": "A different question",
+      "body": "'What's the chance of rain?' is a different question from 'what's the chance of rain *given* the sky is grey?'\n\nEvery spam filter, every Netflix 'because you watched…', every recommendation engine runs on this move: updating a probability once you already know something.\n\nThat move is called [[conditioning|Updating a probability to account for something you now know. You ignore every case where the condition didn't hold, then recount within what's left.]]."
+    },
+    {
+      "id": "concept-restrict",
+      "type": "concept",
+      "title": "Shrinking the world",
+      "body": "P(A | B) means: throw away every roll where B didn't happen, then ask how often A happens among what's left.\n\nB becomes your new [[whole world|In probability this is the *sample space* — the full set of outcomes you're considering. Conditioning replaces it with just the slice where the condition holds.]]. The [[denominator|The number you divide by — the size of the world you're counting within. Conditioning shrinks it, which is why the same event's probability can jump.]] shrinks — and the probability can change a lot.\n\nWe'll track one target: **A = the sum is 10 or more** (a big total). Then we'll condition on what the first die shows."
+    },
+    {
+      "id": "predict-conditional",
+      "type": "predict",
+      "prompt": "Across all 36 rolls, P(sum ≥ 10) is 6/36 — about 1 in 6. Now you learn the *first die landed on 6*. What's the chance of a sum of 10 or more now?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "a", "label": "Still about 1 in 6 — the dice are independent" },
+        { "id": "b", "label": "Much higher — around 1 in 2" },
+        { "id": "c", "label": "Zero" }
+      ],
+      "revealMessage": "Let's collapse the grid to just the rolls where the first die is 6, and recount.",
+      "revealByOption": {
+        "a": "Careful — the *dice* are independent, but the event 'sum ≥ 10' is not independent of the first die. Knowing it's a 6 really does shift the odds. Let's see.",
+        "b": "Right instinct — knowing the first die is a 6 makes a big total much more likely. Let's confirm it on the grid.",
+        "c": "Not zero — a 6 paired with a 4, 5, or 6 already clears 10. Let's count how often."
+      }
+    },
+    {
+      "id": "explore-filter",
+      "type": "interactive",
+      "prompt": "Toggle the condition. Every roll where the first die isn't a 6 is flung away, and the survivors zoom up to fill the frame — watch P(sum ≥ 10) regrow against that smaller world.",
+      "widget": { "type": "conditionZoom", "props": { "condition": "firstDie6", "target": "sumGte10" } }
+    },
+    {
+      "id": "q-denominator",
+      "type": "question",
+      "prompt": "Conditioning on 'first die = 6' pushed P(sum ≥ 10) from about 17% up to 50%. Why?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "a", "label": "The world shrank to the 6 rolls starting with a 6, and 3 of them (sums 10, 11, 12) clear 10" },
+        { "id": "b", "label": "Knowing the first die changes what the second die will roll" },
+        { "id": "c", "label": "It doesn't actually change" }
+      ],
+      "answer": { "correctOptionId": "a" },
+      "feedback": {
+        "correct": "Right — among the 6 rolls with a 6 first, three (6+4, 6+5, 6+6) reach 10 or more. That's 3 out of 6 = 50%, counted against the new, smaller denominator.",
+        "incorrect": "Conditioning doesn't touch the second die — it changes which rolls you're allowed to count. Recount inside the slice where the first die is 6.",
+        "byOption": {
+          "b": "The second die is still a fair, independent roll. What changed is the set of outcomes you count over — the denominator, not the die.",
+          "c": "It really does change: 6/36 (17%) overall becomes 3/6 (50%) once you know the first die is a 6. The smaller world has a much higher fraction of big totals."
+        }
+      },
+      "hint": "Among just the 'first die = 6' rolls, how many reach a sum of 10 or more? Count those over 6."
+    },
+    {
+      "id": "summary",
+      "type": "concept",
+      "title": "Conditioning = new denominator",
+      "body": "To condition on B, make B your entire world and recount A inside it.\n\nDon't ask 'how likely is A overall' — ask 'among the B cases, how often is A?'\n\nThis one idea is the engine behind the most counterintuitive result in all of probability. That's next."
+    }
+  ]
+}
