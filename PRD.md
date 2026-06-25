@@ -358,3 +358,53 @@ Ship only when **all** of these are true:
 7. Full test suite, mobile polish, deploy.
 
 > The MVP is judged on whether **one lesson actually teaches probability without any AI**. Five lessons that climb and click beat any number of shallow ones. Build the app first; smart and sticky come later.
+
+---
+
+## Appendix A — Implementation deltas (what actually shipped vs. this PRD)
+
+This appendix records where the built app diverges from the spec above. The original sections (§1–§13) describe the *intended* design; this section is the source of truth for *what exists in the code*. Everything in §4 (user stories), §8 (DB schema), §10–§12 (testing, performance, DoD), and the §6 step model is unchanged unless noted here.
+
+### A.1 Engine, schema, and rules — unchanged
+The pure engine matches the PRD exactly and was not modified:
+- **Mastery** = (first-try-correct question steps) / (total question steps); **mastered ≥ 0.8**; **review nudge < 0.6**.
+- **Unlock rule**: lesson N unlocks when N-1 is `completed`; lesson 1 always open.
+- **Streak**: same-day no-op, +1 day increments (updates longest), gap > 1 resets to 1; local-time `YYYY-MM-DD`.
+- **Milestones**: `first_lesson`, `streak_3`, `course_complete`.
+- Firestore schema (`users/{uid}` + `users/{uid}/progress/{lessonId}`) is as specified.
+
+### A.2 Content model — one addition
+The typed-step model (`concept | predict | interactive | question`) is unchanged except:
+- **`predict` steps gained `revealByOption`** — an optional per-option reveal message (keyed by option id), so a savvy learner who guesses the correct answer isn't shown the generic "hold that thought" reveal. Falls back to `revealMessage`. Used across all five lessons.
+
+### A.3 Widget registry — renamed and expanded (the biggest change)
+The PRD planned 5 widgets. The shipped registry (`src/widgets/registry.tsx`) has **6**, with two of the planned ones reconceived and one new companion widget added:
+
+| PRD widget | Shipped widget | Change |
+|---|---|---|
+| `coinSampler` (L1) | `coinSampler` | Unchanged — slider drives 10→10,000 trials, bars converge. |
+| `diceGrid` (L2/L3) | **`probabilityArea`** (L2) | **Reconceived.** Instead of a 6×6 enumerated outcome grid, L2 uses a **unit-square area model**: the square is all outcomes (area = 1); event A is a vertical band of width P(A), event B a horizontal band of height P(B). Drag the corner to resize both. **AND** = the intersection rectangle (P(A)·P(B) shown *as a shape* — multiplication made visual); **OR** = the union L-shape, minus the overlap you'd otherwise double-count. A "rain" of random points drops and the live tally converges to the true area — deliberately reusing Lesson 1's long-run idea. |
+| `conditionFilter` (L3) | **`conditionZoom`** (L3) | **Reconceived (same idea, stronger animation).** Keeps the 36 two-dice outcomes, but as glowing dots on a "focus stage." Conditioning on B physically **throws away** every dot where B didn't happen (they fly outward and fade) while the survivors zoom up and repack to fill the frame, with the A∩B dots grouped and bright. The learner watches the denominator shrink and the fraction regrow. |
+| `bayesIconArray` (L4) | `bayesIconArray` (L4) | Unchanged — 1,000-person array + 3 sliders (prevalence, sensitivity, false-positive), recolors true vs false positives live. |
+| — | **`bayesFormula`** (L4) | **New companion widget.** A static renderer that shows Bayes' theorem with the array's current numbers already plugged in — first as a plain count (true positives / all positives), then as the formal theorem — color-matched to the array (rose = true positives, amber = false positives). This adds the "formula only after the intuition lands" beat to the centerpiece lesson. |
+| `evBettingGame` (L5) | `evBettingGame` (L5) | Unchanged in role; framed as running "a crowd of N gamblers" with Run/Resume/Replay controls and a live bankroll trajectory vs. EV-per-play. |
+
+Net registry: `coinSampler · probabilityArea · conditionZoom · bayesIconArray · bayesFormula · evBettingGame`.
+
+**Rendering tech delta.** §7 planned SVG for the discrete/structured visuals (grid, condition filter, icon array) and Canvas only where 60fps mattered. In practice **all five live widgets render on HTML5 Canvas** (`coinSampler`, `probabilityArea`, `conditionZoom`, `bayesIconArray`, `evBettingGame`) with `requestAnimationFrame` + `devicePixelRatio`; only `bayesFormula` is plain DOM/markup. The 60fps and touch targets still hold.
+
+### A.4 Lesson structure — minor
+- **L2 (Combining Events)** has **two** `interactive` steps (one for AND, one for OR) rather than a single combined widget step.
+- **L4 (Bayes)** runs `concept → predict → interactive (bayesIconArray) → question → concept → question (bayesFormula companion) → concept`, i.e. two checkpoints plus the formula reveal, rather than the single-reveal sketch in §5.
+- All five lessons still open with a real-world hook, contain a predict-then-surprise beat, ≥1 rich interaction, and authored right/wrong feedback.
+
+### A.5 New features beyond the PRD
+- **Lesson redo / restart.** A finished lesson can be redone. `restartLesson` (in `src/progress/ProgressContext.tsx`, wired through `LessonPlayer`) clears the lesson's per-step results so the redo is scored cleanly for first-try mastery — but **keeps** the existing status and mastery until the redo completes, so the course path doesn't flicker to 0% mid-redo. (The PRD did not specify a redo path.)
+- **Reduced-motion support.** Animated widgets (`conditionZoom`, others) honor `prefers-reduced-motion`.
+
+### A.6 Test suite — superset of the five scenarios
+Beyond the PRD's five required e2e scenarios, the shipped Playwright suite adds:
+- `05-revisit-and-back` — the review/revisit nudge flow.
+- `06-redo-mastery` — redoing a lesson improves the recorded mastery score.
+- `mobile` — the phone-viewport/touch scenario (PRD scenario 5) as its own spec.
+Unit/integration coverage (checkAnswer, selectFeedback, mastery, streak, content validation, widgets, Firestore rules) is as specified.

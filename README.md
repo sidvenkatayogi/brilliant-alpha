@@ -12,8 +12,8 @@ every line of feedback is hand-authored and runs client-side.
 ## The five lessons
 
 1. **Chance & the Long Run** — probability as long-run frequency; a die/coin sampler that converges as trials grow.
-2. **Combining Events** — AND/OR/independence on a live 6×6 dice grid.
-3. **Conditioning** — P(A | B) as a collapsing sample space.
+2. **Combining Events** — AND/OR/independence on a draggable unit-square area model; AND is the overlap rectangle, OR the union minus the double-count.
+3. **Conditioning** — P(A | B) as a collapsing sample space: the 36 dice outcomes that fail the condition fly out while the survivors zoom in and repack.
 4. **Bayes & Base Rates ⭐** — a 1,000-person icon array showing why a "99% accurate" positive can still mean you're fine.
 5. **Expected Value** — a betting sim where variance flatters you while negative EV bleeds you.
 
@@ -33,7 +33,7 @@ later without an engine rewrite.
 src/
   content/      types.ts (the model) · loadLessons.ts · lessons/*.json
   engine/       checkAnswer · selectFeedback · mastery · streak   (pure, synchronous, no network)
-  widgets/      registry · CoinSampler · DiceGrid · ConditionFilter · BayesIconArray · EvBettingGame
+  widgets/      registry · CoinSampler · ProbabilityArea · ConditionZoom · BayesIconArray · BayesFormula · EvBettingGame
   player/       LessonPlayer · StepRenderer · steps/* · FeedbackPanel · WidgetHost
   auth/         AuthContext · AuthForm · ProtectedRoute
   progress/     ProgressContext · firestore.ts · types.ts
@@ -46,8 +46,9 @@ src/
   renders in well under 100ms.
 - Firestore holds **only per-user state** (progress, streak, milestones); lesson content ships in the bundle.
 - All progress/streak writes are **fire-and-forget** and never block feedback or interaction.
-- Canvas widgets (`CoinSampler`, `EvBettingGame`, `BayesIconArray`) use `requestAnimationFrame` and `devicePixelRatio`
-  for crisp 60fps animation; structured visuals (`DiceGrid`, `ConditionFilter`) use SVG/DOM.
+- The live visuals (`CoinSampler`, `ProbabilityArea`, `ConditionZoom`, `BayesIconArray`, `EvBettingGame`) render on
+  HTML5 Canvas with `requestAnimationFrame` and `devicePixelRatio` for crisp 60fps animation; `BayesFormula` is plain
+  DOM/markup. Animated widgets honor `prefers-reduced-motion`.
 
 ## Tech stack
 
@@ -82,15 +83,15 @@ npm run dev
 
 ```bash
 npm test            # Vitest — engine, feedback, mastery, streaks, content, widgets, components
-npm run test:e2e    # Playwright — the 5 MVP scenarios (auto-starts emulators + dev server)
+npm run test:e2e    # Playwright — the MVP scenarios + extras (auto-starts emulators + dev server)
 ```
 
 - **Unit/component:** answer-checking (MC + numeric tolerance), feedback selection (incl. per-option), mastery + unlock
   rule, streak transitions (mocked dates), step-renderer dispatch, widget logic, and a content guard that structurally
   enforces the Definition of Done across all five lessons.
 - **Integration (emulator):** security rules block cross-user access; progress round-trips.
-- **E2E (Playwright):** complete-and-recover, live widget manipulation, leave-and-resume, next-step recommendation, and
-  the full flow on a phone-sized touch viewport.
+- **E2E (Playwright):** complete-and-recover, live widget manipulation, leave-and-resume, next-step recommendation, the
+  full flow on a phone-sized touch viewport, plus the revisit nudge and a lesson-redo-improves-mastery flow.
 
 ## Deploy (Firebase Hosting)
 
