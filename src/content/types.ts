@@ -90,7 +90,6 @@ export interface QuestionStep extends StepBase {
 }
 
 export type Step = ConceptStep | PredictStep | InteractiveStep | QuestionStep
-export type StepType = Step['type']
 
 export interface Lesson {
   id: string
