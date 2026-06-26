@@ -13,6 +13,9 @@
     "test:integration": "firebase emulators:exec --only firestore --project demo-long-run \"vitest run --config vitest.integration.config.ts\"",
     "test:e2e": "playwright test",
     "emulators": "firebase emulators:start --only auth,firestore",
+    "emulators:all": "npm --prefix functions run build && firebase emulators:start --only auth,firestore,functions --project demo-long-run",
+    "dev:test": "vite --mode test",
+    "seed:demo": "node functions/seed-demo.js",
     "deploy": "npm run build && firebase deploy"
   },
   "dependencies": {

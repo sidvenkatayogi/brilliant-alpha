@@ -4,6 +4,7 @@ import {
   setDoc,
   getDocs,
   collection,
+  runTransaction,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import type { LessonProgress, UserDoc } from './types'
@@ -24,27 +25,39 @@ export async function fetchUserDoc(uid: string): Promise<UserDoc | null> {
   return snap.exists() ? (snap.data() as UserDoc) : null
 }
 
-/** Create the user doc on first sign-in; no-op if it already exists. */
+/**
+ * Create the user doc on first sign-in; no-op if it already exists. Runs in a
+ * transaction so two concurrent callers (the sign-in load and a very fast first
+ * lesson completion) can't both create it and clobber each other's writes.
+ * Display-name correction after the sign-up race is handled by `syncDisplayName`.
+ */
 export async function ensureUserDoc(
   uid: string,
   displayName: string,
   email: string,
 ): Promise<UserDoc> {
-  const existing = await fetchUserDoc(uid)
-  if (existing) return existing
-
-  const fresh: UserDoc = {
-    displayName,
-    email,
-    createdAt: Date.now(),
-    currentStreak: 0,
-    longestStreak: 0,
-    lastActiveDate: null,
-    totalLessonsCompleted: 0,
-    milestones: [],
-  }
-  await setDoc(userRef(uid), fresh)
-  return fresh
+  return runTransaction(db, async (tx) => {
+    const ref = userRef(uid)
+    const snap = await tx.get(ref)
+    if (snap.exists()) {
+      const d = snap.data() as UserDoc
+      // Backfill cohortId for user docs created before Phase 2.
+      return { ...d, cohortId: d.cohortId ?? null }
+    }
+    const fresh: UserDoc = {
+      displayName,
+      email,
+      createdAt: Date.now(),
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActiveDate: null,
+      totalLessonsCompleted: 0,
+      milestones: [],
+      cohortId: null,
+    }
+    tx.set(ref, fresh)
+    return fresh
+  })
 }
 
 export async function updateUserDoc(

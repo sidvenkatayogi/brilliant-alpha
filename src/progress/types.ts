@@ -33,6 +33,8 @@ export interface UserDoc {
   lastActiveDate: string | null
   totalLessonsCompleted: number
   milestones: Milestone[]
+  /** Phase 2: the cohort the learner belongs to; null until lazily assigned. */
+  cohortId: string | null
 }
 
 export function emptyProgress(lessonId: string): LessonProgress {

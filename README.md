@@ -63,8 +63,10 @@ src/
   player/       LessonPlayer · StepRenderer · steps/* · FeedbackPanel · WidgetHost · scenario/ScenarioContext
   auth/         AuthContext · AuthForm · ProtectedRoute
   progress/     ProgressContext · firestore.ts · types.ts
-  screens/      Dashboard · LessonRoute · CompletionScreen · Profile
+  cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · cohortName · scheduling · avatar · PeerAvatars   (Phase 2)
+  screens/      Dashboard · LessonRoute · CompletionScreen · Profile · Group
   lib/          firebase.ts (init + emulator wiring)
+functions/      Cloud Functions (TypeScript): assignCohort · generateMeetingOutline   (Phase 2)
 ```
 
 **Key guarantees**
@@ -77,17 +79,42 @@ src/
   for its slide/repack transitions and `BayesFormula` is plain DOM/markup. Every widget honors `prefers-reduced-motion`
   (jump to final states, skip the particle flourishes) and is touch-first.
 
+## Phase 2 — Cohorts, weekly meetings & AI facilitation
+
+Phase 2 turns the solo learner into a small **book-club cohort** and adds the app's **first and only AI feature**.
+The Phase 1 learning path is unchanged: lessons still teach with zero model calls, and feedback is hand-authored.
+AI touches the **social layer only** — it structures a human discussion, it never teaches probability.
+
+All under a **Group** tab (`/group`), reached from the **View your group / Join a group** CTA on the dashboard:
+
+- **Cohorts** — on first join a learner is matched into a small same-level group (4–6) by a transactional Cloud
+  Function, or a new cohort is created. Permanent.
+- **Weekly scheduler** — a LettuceMeet-style availability grid (`src/widgets/AvailabilityGrid.tsx`). Slots are stored
+  as **absolute UTC instants**, rendered in each member's local timezone. Overlap + suggested slot compute client-side.
+  Times are **proposed → approved by the whole group → locked** (no member decides unilaterally); all proposed times
+  stay viewable, you can withdraw an approval, and a meeting link can be pasted.
+- **AI meeting outline** — `generateMeetingOutline` calls `claude-sonnet-4-6` (key in a Functions secret), grounded in
+  the lessons the cohort has completed; strict JSON, parsed defensively, cached on the meeting, with a static fallback.
+- **Peer progress on the course path** — each lesson card shows cohort-mates who started/completed it (randomized
+  avatar colors), or "be the first one to complete this lesson!" until someone does. Presence, never rankings/scores.
+
+**Backend** (first for this codebase): two callable Cloud Functions in `functions/` — `assignCohort` (transactional)
+and `generateMeetingOutline` (holds the Anthropic key). Everything else stays client + security rules. The Anthropic
+call is **stubbed under the emulator**, so tests and local runs never hit the real API.
+
 ## Tech stack
 
 Vite + React 18 + TypeScript · Tailwind (mobile-first) · React Router · Firebase Auth (email/password + Google) ·
-Cloud Firestore · Firebase Hosting · Vitest + React Testing Library · Playwright · Firebase Emulator Suite.
+Cloud Firestore · **Cloud Functions + Anthropic SDK (Phase 2, functions package only)** · Firebase Hosting ·
+Vitest + React Testing Library · Playwright · Firebase Emulator Suite.
 
 ## Setup
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in your Firebase web config (see below)
-npm run dev                  # http://localhost:5173
+npm --prefix functions install   # Cloud Functions deps (Phase 2)
+cp .env.example .env.local        # then fill in your Firebase web config (see below)
+npm run dev                       # http://localhost:5173
 ```
 
 ### Firebase project (one-time)
@@ -97,34 +124,52 @@ npm run dev                  # http://localhost:5173
    hiding them.
 2. **Authentication → Sign-in method:** enable **Email/Password** and **Google**.
 3. `firebase login` (once) before deploying.
+4. **Phase 2 — Cloud Functions** require the **Blaze (pay-as-you-go)** plan + the Anthropic key as a Functions
+   **secret** (never committed): `firebase functions:secrets:set ANTHROPIC_API_KEY`. The model is a one-line constant
+   in `functions/src/anthropic.ts` (`claude-sonnet-4-6`).
 
 ### Run against the local emulators (no live project needed)
 
 ```bash
-npm run emulators            # Auth + Firestore on :9099 / :8080, UI on :4000
-# in another shell, with VITE_USE_EMULATORS=true in .env.local:
-npm run dev
+# Phase 2 — build functions, then start Auth + Firestore + Functions on a demo
+# project (no real credentials, no Anthropic key needed — the outline is stubbed).
+npm run emulators:all        # UI :4000 · functions :5001
+npm run dev:test             # in another shell → http://localhost:5173 (uses .env.test)
+
+# Optional: seed a ready-made demo cohort (log in as demo@longrun.app / demo1234)
+npm run seed:demo            # after the emulators are up; re-run any time to reset
+
+# (Phase 1 only: `npm run emulators` starts just Auth + Firestore.)
 ```
 
 ## Testing
 
 ```bash
-npm test            # Vitest — engine, feedback, mastery, streaks, content, widgets, components
-npm run test:e2e    # Playwright — the MVP scenarios + extras (auto-starts emulators + dev server)
+npm test                     # Vitest — engine, feedback, mastery, streaks, content, widgets, cohort logic
+npm run test:integration     # Firestore rules (emulator) — Phase 1 + cohort privacy boundary
+npm --prefix functions test  # Cloud Functions — cohort matching, prompt building, AI outline (Anthropic mocked)
+npm run test:e2e             # Playwright — MVP + Group scenarios (auto-starts emulators incl. functions)
 ```
 
-- **Unit/component:** answer-checking (MC + numeric tolerance), feedback selection (incl. per-option), mastery + unlock
-  rule, streak transitions (mocked dates), step-renderer dispatch, widget logic, and a content guard that structurally
-  enforces the Definition of Done across all five lessons.
-- **Integration (emulator):** security rules block cross-user access; progress round-trips.
-- **E2E (Playwright):** complete-and-recover, live widget manipulation, leave-and-resume, next-step recommendation, the
-  full flow on a phone-sized touch viewport, plus the revisit nudge and a lesson-redo-improves-mastery flow.
+- **Unit/component:** answer-checking, feedback selection, mastery + unlock rule, streak transitions, step-renderer
+  dispatch, widget logic, a content guard across the lessons, and (Phase 2) `levelBand`, overlap math incl. a
+  **two-timezone** test, peer-progress state machine, outline parse/fallback, cohort-name generator, and `allApproved`.
+- **Integration (emulator):** Phase 1 cross-user rules + the Phase 2 cohort privacy boundary (non-members blocked, no
+  cross-member writes, no client `memberUids` write, projection has no forbidden fields).
+- **Functions (Anthropic mocked — CI never calls the real API):** `assignCohort` matching, prompt construction, and
+  outline cache / malformed-JSON / API-error fallback paths.
+- **E2E (Playwright):** Phase 1 flows **plus** Phase 2 — join via the CTA, propose → approve → lock + link, outline
+  cached for a second member, and peer presence (be-the-first → peer icon) on the course path; mobile included.
 
-## Deploy (Firebase Hosting)
+## Deploy (Firebase Hosting + Functions)
 
 ```bash
-npm run deploy               # vite build + firebase deploy (hosting + Firestore rules)
+npm run deploy               # vite build + firebase deploy (hosting + Firestore rules + Functions)
 ```
+
+Phase 2 deploy prerequisites: the project is on **Blaze** and `ANTHROPIC_API_KEY` is set as a Functions secret (see
+Setup). A few pure helpers (`levelBand`, `cohortName`, outline parse/fallback) are duplicated in
+`functions/src/shared/` because the functions package builds independently — keep the copies in sync.
 
 ## Performance targets
 

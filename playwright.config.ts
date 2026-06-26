@@ -8,7 +8,9 @@ const isCI = !!process.env.CI
 // both the Firebase Emulator Suite and the Vite dev server before testing.
 export default defineConfig({
   testDir: './tests/e2e',
-  timeout: 30_000,
+  // Generous enough to absorb the first-test cold start (Vite first compile +
+  // functions emulator warm-up) on a fresh boot.
+  timeout: 45_000,
   fullyParallel: false,
   workers: 1,
   retries: isCI ? 1 : 0,
@@ -23,10 +25,14 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'firebase emulators:start --only auth,firestore --project demo-long-run',
+      // Build the Cloud Functions then boot auth + firestore + functions. The
+      // outline function returns a deterministic stub under the emulator, so the
+      // Anthropic API is never called in e2e (PRD2 §13).
+      command:
+        'npm --prefix functions run build && firebase emulators:start --only auth,firestore,functions --project demo-long-run',
       url: 'http://127.0.0.1:4000',
       reuseExistingServer: !isCI,
-      timeout: 60_000,
+      timeout: 120_000,
       stdout: 'ignore',
     },
     {

@@ -1,7 +1,10 @@
 rules_version = '2';
 
-// A learner can read and write ONLY their own user document and its subcollections.
-// Lesson content is static in the bundle and never touches Firestore.
+// Phase 1: a learner reads/writes ONLY their own user doc + subcollections.
+// Phase 2 adds a scoped cohort layer: peers can read each other's THIN
+// projection + shared meeting data, but never private progress. Membership
+// (cohorts/{cid}.memberUids) is written only by the Admin SDK in a Cloud
+// Function — clients are denied.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
@@ -9,6 +12,41 @@ service cloud.firestore {
 
       match /{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    match /cohorts/{cid} {
+      // A member of the cohort can read its metadata.
+      function isMember() {
+        return request.auth != null &&
+          request.auth.uid in get(/databases/$(database)/documents/cohorts/$(cid)).data.memberUids;
+      }
+
+      allow read: if request.auth != null && request.auth.uid in resource.data.memberUids;
+      // Membership changes only via the Admin SDK (assignCohort function).
+      allow write: if false;
+
+      // The thin peer-visible projection. Readable by any cohort member;
+      // writable only by its owner (and only if they're a member).
+      match /memberProgress/{uid} {
+        allow read: if isMember();
+        allow create, update: if request.auth != null
+          && request.auth.uid == uid
+          && isMember();
+      }
+
+      // Weekly meeting doc. Any member can create (race-safe by weekId id),
+      // read, and update (confirm a slot, paste a link, store the AI outline).
+      match /meetings/{wid} {
+        allow read, create, update: if isMember();
+
+        // Each member's own availability picks.
+        match /availability/{uid} {
+          allow read: if isMember();
+          allow create, update: if request.auth != null
+            && request.auth.uid == uid
+            && isMember();
+        }
       }
     }
   }

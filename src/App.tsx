@@ -7,6 +7,7 @@ import Dashboard from './screens/Dashboard'
 import LessonRoute from './screens/LessonRoute'
 import CompletionScreen from './screens/CompletionScreen'
 import Profile from './screens/Profile'
+import Group from './screens/Group'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -46,6 +47,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/group"
+        element={
+          <ProtectedRoute>
+            <Group />
           </ProtectedRoute>
         }
       />

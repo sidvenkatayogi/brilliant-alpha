@@ -18,6 +18,8 @@ import {
   saveLessonProgress,
   updateUserDoc,
 } from './firestore'
+import { saveMemberProgress } from '../cohort/firestore'
+import type { MemberProgress } from '../cohort/types'
 import { emptyProgress, type LessonProgress, type Milestone, type UserDoc } from './types'
 
 interface ProgressContextValue {
@@ -34,6 +36,8 @@ interface ProgressContextValue {
   ) => void
   restartLesson: (lessonId: string) => void
   completeLesson: (lesson: Lesson) => Promise<{ newMilestones: Milestone[]; mastery: number }>
+  /** Reflect a server-side cohort assignment locally so the peer projection syncs. */
+  setCohortId: (cohortId: string) => void
 }
 
 const ProgressContext = createContext<ProgressContextValue | null>(null)
@@ -46,6 +50,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   // Latest progress snapshot for fire-and-forget persistence without stale closures.
   const progressRef = useRef(progressByLesson)
   progressRef.current = progressByLesson
+  // Signature of the last peer projection we wrote, to avoid redundant writes.
+  const lastProjectionRef = useRef<string>('')
 
   // Load user doc + all progress on sign-in; clear on sign-out.
   useEffect(() => {
@@ -59,6 +65,13 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     ;(async () => {
       const doc = await ensureUserDoc(user.uid, user.displayName ?? 'Learner', user.email ?? '')
+      // Sign-up race: the doc can be created (from onAuthStateChanged) before
+      // updateProfile sets the chosen name. If auth now has a real name that
+      // differs, correct the stored doc so it (and the peer projection) match.
+      if (user.displayName && doc.displayName !== user.displayName) {
+        doc.displayName = user.displayName
+        void updateUserDoc(user.uid, { displayName: user.displayName })
+      }
       const list = await fetchAllProgress(user.uid)
       if (cancelled) return
       setUserDoc(doc)
@@ -69,6 +82,46 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [user])
+
+  // Mirror lesson-level started/completed into the cohort's thin peer-visible
+  // projection (PRD2 §6.2/§8). Runs whenever the started/completed set changes,
+  // only if the learner has a cohort. Deliberately carries NO step results,
+  // attempts, mastery, or streaks — peers must never see those.
+  useEffect(() => {
+    const cohortId = userDoc?.cohortId
+    if (!user || !cohortId || !userDoc) return
+    const touched = Object.values(progressByLesson).filter((p) => p.status !== 'not_started')
+    const lessonsStarted = touched.map((p) => p.lessonId)
+    const lessonsCompleted = touched
+      .filter((p) => p.status === 'completed')
+      .map((p) => p.lessonId)
+    // Current lesson = most-recently-accessed in-progress lesson.
+    const current = touched
+      .filter((p) => p.status === 'in_progress')
+      .sort((a, b) => (b.lastAccessedAt ?? 0) - (a.lastAccessedAt ?? 0))[0]
+    const projection: MemberProgress = {
+      uid: user.uid,
+      displayName: userDoc.displayName,
+      lessonsStarted,
+      lessonsCompleted,
+      currentLessonId: current?.lessonId ?? null,
+      updatedAt: Date.now(),
+    }
+    const signature = JSON.stringify({
+      c: cohortId,
+      s: [...lessonsStarted].sort(),
+      d: [...lessonsCompleted].sort(),
+      l: projection.currentLessonId,
+      n: userDoc.displayName,
+    })
+    if (signature === lastProjectionRef.current) return
+    lastProjectionRef.current = signature
+    void saveMemberProgress(cohortId, projection) // fire-and-forget
+  }, [progressByLesson, user, userDoc])
+
+  const setCohortId = useCallback((cohortId: string) => {
+    setUserDoc((prev) => (prev && prev.cohortId !== cohortId ? { ...prev, cohortId } : prev))
+  }, [])
 
   const getProgress = useCallback(
     (lessonId: string): LessonProgress =>
@@ -155,21 +208,27 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       setProgressByLesson((prev) => ({ ...prev, [lesson.id]: completed }))
       if (user) void saveLessonProgress(user.uid, completed)
 
-      // Update streak + milestones on the user doc.
+      // Update streak + milestones on the user doc. If the doc hasn't finished
+      // loading yet (e.g. a very fast first lesson), fetch/create it first so the
+      // streak and lessons-completed count are never silently dropped.
       const newMilestones: Milestone[] = []
-      if (userDoc && user) {
+      let baseDoc = userDoc
+      if (!baseDoc && user) {
+        baseDoc = await ensureUserDoc(user.uid, user.displayName ?? 'Learner', user.email ?? '')
+      }
+      if (baseDoc && user) {
         const today = toLocalDateString(new Date())
         const streak = applyActivity(
           {
-            currentStreak: userDoc.currentStreak,
-            longestStreak: userDoc.longestStreak,
-            lastActiveDate: userDoc.lastActiveDate,
+            currentStreak: baseDoc.currentStreak,
+            longestStreak: baseDoc.longestStreak,
+            lastActiveDate: baseDoc.lastActiveDate,
           },
           today,
         )
 
-        const totalCompleted = userDoc.totalLessonsCompleted + (wasCompleted ? 0 : 1)
-        const milestones = new Set(userDoc.milestones)
+        const totalCompleted = baseDoc.totalLessonsCompleted + (wasCompleted ? 0 : 1)
+        const milestones = new Set(baseDoc.milestones)
         if (totalCompleted >= 1 && !milestones.has('first_lesson')) {
           milestones.add('first_lesson')
           newMilestones.push('first_lesson')
@@ -184,7 +243,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         }
 
         const nextDoc: UserDoc = {
-          ...userDoc,
+          ...baseDoc,
           currentStreak: streak.currentStreak,
           longestStreak: streak.longestStreak,
           lastActiveDate: streak.lastActiveDate,
@@ -217,6 +276,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         recordStepResult,
         restartLesson,
         completeLesson,
+        setCohortId,
       }}
     >
       {children}
