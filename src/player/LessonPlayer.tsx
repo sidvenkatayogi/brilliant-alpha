@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Lesson } from '../content/types'
 import { useProgress } from '../progress/ProgressContext'
 import { StepRenderer } from './StepRenderer'
+import { ScenarioProvider } from './scenario/ScenarioContext'
 
 interface Props {
   lesson: Lesson
@@ -25,6 +26,9 @@ export function LessonPlayer({ lesson }: Props) {
   )
   const [index, setIndex] = useState(resumeIndex)
   const [finishing, setFinishing] = useState(false)
+  // Bumped on restart so the ScenarioProvider remounts and re-seeds its world
+  // from `scenario.initialState` (the world is ephemeral — never persisted).
+  const [runId, setRunId] = useState(0)
 
   const step = lesson.steps[index]
   const progressPct = useMemo(
@@ -76,6 +80,7 @@ export function LessonPlayer({ lesson }: Props) {
               onClick={() => {
                 restartLesson(lesson.id) // fresh first-try scoring for the redo
                 setIndex(0)
+                setRunId((r) => r + 1) // re-seed the scenario world for the redo
                 setPhase('playing')
               }}
             >
@@ -143,9 +148,11 @@ export function LessonPlayer({ lesson }: Props) {
         <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-accent">
           {lesson.title}
         </p>
-        <div key={step.id} className="animate-[fadeIn_0.2s_ease]">
-          <StepRenderer step={step} onAnswered={handleAnswered} onAdvance={advance} />
-        </div>
+        <ScenarioProvider key={`${lesson.id}-${runId}`} initialState={lesson.scenario?.initialState}>
+          <div key={step.id} className="animate-[fadeIn_0.2s_ease]">
+            <StepRenderer step={step} onAnswered={handleAnswered} onAdvance={advance} />
+          </div>
+        </ScenarioProvider>
         {finishing && (
           <p className="mt-4 text-center text-sm text-slate-400">Wrapping up…</p>
         )}

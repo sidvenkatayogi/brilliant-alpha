@@ -11,10 +11,10 @@ test('finishing recommends the next lesson and unlocks it', async ({ page }) => 
 
   // Completion screen recommends lesson 2 by title.
   await expect(page).toHaveURL(/\/complete/)
-  await expect(page.getByRole('button', { name: /Next: Combining Events/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Next: The Redundancy Bay/ })).toBeVisible()
 
   // Following it opens lesson 2.
-  await page.getByRole('button', { name: /Next: Combining Events/ }).click()
+  await page.getByRole('button', { name: /Next: The Redundancy Bay/ }).click()
   await expect(page).toHaveURL(/\/lesson\/combining-events/)
 
   // Back on the course path: streak is 1 and lesson 1 reads completed.

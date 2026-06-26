@@ -1,21 +1,40 @@
 # Long Run — Learn Probability by Doing
 
 **Subject: Probability & Statistics.** A Brilliant-style web app that teaches probability through hands-on
-interaction — you predict, manipulate a live visual, sometimes get it wrong, and figure it out. Five lessons
-climb from "what does chance even mean" to "why the house always wins."
+interaction. Each lesson is a **playable scenario** — *the thing you manipulate IS the real-world situation*,
+not an abstract chart standing in for it. You predict, run the situation, sometimes get it wrong, and feel the
+math bite. Five lessons climb from "what does chance even mean" to "why the house always wins."
+
+**The design rule (v2): the scenario is the mechanic.** You don't read about insurance and then drag an abstract
+slider — you *are* the insurer, and the "slider" is how many drivers you've signed up. The aha isn't "watch the
+bars settle"; it's "watch your business survive (or not)." Every lesson runs one **predict → act → surprise**
+beat through a single living world that persists across its concept, predict, interactive, and question steps.
 
 **Persona — Maya, 29, product manager / curious self-learner.** She learns in ~10-minute phone sessions,
 bounces off symbol-heavy textbooks, and loves counterintuitive "wait, *what?*" moments. Every design call is
 resolved for her: shorter, more visual, more real-world, less notation. **No AI anywhere** — every check and
 every line of feedback is hand-authored and runs client-side.
 
-## The five lessons
+## The five lessons (scenario games)
 
-1. **Chance & the Long Run** — probability as long-run frequency; a die/coin sampler that converges as trials grow.
-2. **Combining Events** — AND/OR/independence on a draggable unit-square area model; AND is the overlap rectangle, OR the union minus the double-count.
-3. **Conditioning** — P(A | B) as a collapsing sample space: the 36 dice outcomes that fail the condition fly out while the survivors zoom in and repack.
-4. **Bayes & Base Rates ⭐** — a 1,000-person icon array showing why a "99% accurate" positive can still mean you're fine.
-5. **Expected Value** — a betting sim where variance flatters you while negative EV bleeds you.
+1. **The Insurance Desk** — *long-run frequency.* You run a small-town car-insurer. Sign up drivers, run years,
+   and watch a positive-margin business still go broke at 10 customers — then steady out at 5,000. (`insuranceDesk`)
+2. **The Redundancy Bay** — *AND / OR / independence.* You're an aircraft safety engineer. Bolt on backup hydraulic
+   systems and fly a fleet: catastrophes (AND) collapse multiplicatively while maintenance flags (OR) climb. (`redundancyBay`)
+3. **The Spam Inbox** — *conditioning.* You tune a spam filter. Toggle clues and the inbox physically collapses to the
+   matching slice — P(spam) leaps from ~10% to ~80% because conditioning recounts inside the restricted world. (`spamInbox`)
+4. **The Screening Clinic ⭐** — *Bayes / base rates.* 1,000 people stream through a "99% accurate" test; the
+   positive bin splits and false positives flood the true ones, so a positive is <10% real. Companion `bayesFormula`
+   reveals the equation only after the intuition lands. (`screeningClinic`)
+5. **The Casino Floor** — *expected value.* You play roulette with \$100: variance flatters you early, the
+   fast-forward reveals the bleed, then **"be the house"** flips the same math into steady profit — closing the loop
+   back to the insurer in Lesson 1. (`casinoFloor`)
+
+Every interaction is the situation itself: houses + cars, planes + systems, envelopes, people, chips + a wheel —
+flat illustrated SVG for the recognizable scene elements, HTML5 Canvas for the high-count sims (the 1,000-person
+clinic, the fleet, the 1,000-spin fast-forward, the multi-year insurance runs). One shared semantic palette
+(favorable/true = teal-green, unfavorable/false = rose/amber, accent = indigo) means color means the same thing
+everywhere, and state changes are **animated transitions, never instant recolors**.
 
 ## Architecture
 
@@ -29,12 +48,19 @@ Adding a lesson is a JSON file in `src/content/lessons/` (+ registering one widg
 interaction). The renderer never special-cases a lesson — this is what makes Phase 2 (AI-generated content) drop in
 later without an engine rewrite.
 
+**Shared scenario state (`src/player/scenario/`).** A lesson JSON may declare an optional `scenario` block
+(`role` + `initialState`). A lightweight `ScenarioProvider`, scoped inside `LessonPlayer`, threads that living world
+through every step so the story and the toy are one object — widgets read seed values and publish live numbers back,
+and concept/predict/question steps reflect the same world. It is **ephemeral**: never persisted to Firestore, and it
+re-seeds from `initialState` on resume/restart, so the schema is untouched. Lessons without a `scenario` block behave
+exactly as before (independent steps).
+
 ```
 src/
-  content/      types.ts (the model) · loadLessons.ts · lessons/*.json
+  content/      types.ts (the model, incl. Scenario) · loadLessons.ts · lessons/*.json
   engine/       checkAnswer · selectFeedback · mastery · streak   (pure, synchronous, no network)
-  widgets/      registry · CoinSampler · ProbabilityArea · ConditionZoom · BayesIconArray · BayesFormula · EvBettingGame
-  player/       LessonPlayer · StepRenderer · steps/* · FeedbackPanel · WidgetHost
+  widgets/      registry · InsuranceDesk · RedundancyBay · SpamInbox · ScreeningClinic · BayesFormula · CasinoFloor
+  player/       LessonPlayer · StepRenderer · steps/* · FeedbackPanel · WidgetHost · scenario/ScenarioContext
   auth/         AuthContext · AuthForm · ProtectedRoute
   progress/     ProgressContext · firestore.ts · types.ts
   screens/      Dashboard · LessonRoute · CompletionScreen · Profile
@@ -46,9 +72,10 @@ src/
   renders in well under 100ms.
 - Firestore holds **only per-user state** (progress, streak, milestones); lesson content ships in the bundle.
 - All progress/streak writes are **fire-and-forget** and never block feedback or interaction.
-- The live visuals (`CoinSampler`, `ProbabilityArea`, `ConditionZoom`, `BayesIconArray`, `EvBettingGame`) render on
-  HTML5 Canvas with `requestAnimationFrame` and `devicePixelRatio` for crisp 60fps animation; `BayesFormula` is plain
-  DOM/markup. Animated widgets honor `prefers-reduced-motion`.
+- The high-count live sims (`InsuranceDesk`, `RedundancyBay`, `ScreeningClinic`, `CasinoFloor`) render on HTML5 Canvas
+  with `requestAnimationFrame` and `devicePixelRatio` for crisp 60fps animation; `SpamInbox` uses SVG + Framer Motion
+  for its slide/repack transitions and `BayesFormula` is plain DOM/markup. Every widget honors `prefers-reduced-motion`
+  (jump to final states, skip the particle flourishes) and is touch-first.
 
 ## Tech stack
 

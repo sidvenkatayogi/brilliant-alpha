@@ -15,34 +15,37 @@ export async function signUp(page: Page): Promise<string> {
   return email
 }
 
-/** Open Lesson 1 from the dashboard. */
+/** Open Lesson 1 (The Insurance Desk) from the dashboard. */
 export async function openLessonOne(page: Page) {
   await page.getByTestId('lesson-card-long-run').click()
-  await expect(page.getByText('Why insurers')).toBeVisible()
+  await expect(page.getByText("Here's your town")).toBeVisible()
 }
 
 /**
- * Walk Lesson 1 to its final step. When `recover` is true, the first checkpoint
- * is answered wrong first (to exercise the feedback-recovery path) before the
- * correct answer. Leaves the page on the last step's Continue (not yet clicked).
+ * Walk Lesson 1 (The Insurance Desk) to its final step. When `recover` is true,
+ * the first checkpoint is answered wrong first (to exercise the feedback-recovery
+ * path) before the correct answer. Leaves the page on the last step's Continue
+ * (not yet clicked).
+ *
+ * Lesson 1 has two checkpoint questions, so a clean run masters 100% and a
+ * single recovered miss scores 50%.
  */
 export async function playLessonOneToEnd(page: Page, recover = true) {
-  // 1–2: two concept steps.
-  await page.getByRole('button', { name: 'Continue' }).click()
+  // 1: concept — "Here's your town".
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  // 3: predict — lock in any guess.
-  await page.getByText('Anywhere from 0 to 3').click()
+  // 2: predict — lock in any guess.
+  await page.getByText('Most years, but the odd bad year').click()
   await page.getByRole('button', { name: 'Lock in my guess' }).click()
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  // 4: interactive — run to the max so the completion gate is satisfied.
-  await page.getByRole('button', { name: /Run to/ }).click()
+  // 3: interactive — grow the business to 2,000 drivers to satisfy the gate.
+  await page.getByTestId('scale-2000').click()
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  // 5: question — optionally answer wrong, see feedback, then recover.
+  // 4: first question — optionally answer wrong, see feedback, then recover.
   if (recover) {
-    await page.getByText('The die slowly becomes fair').click()
+    await page.getByText('Bigger companies somehow make drivers crash less').click()
     await page.getByRole('button', { name: 'Check' }).click()
     await expect(page.getByTestId('feedback')).toHaveAttribute('data-correct', 'false')
     await page.getByText('Small samples are noisy').click()
@@ -54,12 +57,12 @@ export async function playLessonOneToEnd(page: Page, recover = true) {
   await expect(page.getByTestId('feedback')).toHaveAttribute('data-correct', 'true')
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  // 6: second question.
-  await page.getByText('Often 0, 1, or 2').click()
+  // 5: second question — answer correctly (first try on both runs).
+  await page.getByText("Nothing certain").click()
   await page.getByRole('button', { name: 'Check' }).click()
   await expect(page.getByTestId('feedback')).toHaveAttribute('data-correct', 'true')
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  // 7: summary concept — caller decides when to finish.
+  // 6: summary concept — caller decides when to finish.
   await expect(page.getByText('The long run, in one line')).toBeVisible()
 }

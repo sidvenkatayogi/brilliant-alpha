@@ -12,12 +12,12 @@ export interface WidgetSpec {
 }
 
 export type WidgetType =
-  | 'coinSampler'
-  | 'probabilityArea'
-  | 'conditionZoom'
-  | 'bayesIconArray'
+  | 'insuranceDesk'
+  | 'redundancyBay'
+  | 'spamInbox'
+  | 'screeningClinic'
   | 'bayesFormula'
-  | 'evBettingGame'
+  | 'casinoFloor'
 
 export type AnswerFormat = 'multiple_choice' | 'numeric'
 
@@ -91,6 +91,20 @@ export interface QuestionStep extends StepBase {
 
 export type Step = ConceptStep | PredictStep | InteractiveStep | QuestionStep
 
+/**
+ * Per-lesson shared world (PRD §3). Optional and additive: lessons without it
+ * behave exactly like v1 (independent steps). `initialState` seeds the
+ * `ScenarioProvider`, which threads the same living world from the opening hook
+ * through to the final checkpoint. It is ephemeral exploration state — never
+ * persisted to Firestore — and re-seeds from here on resume/restart.
+ */
+export interface Scenario {
+  /** The role the learner steps into, shown framing the lesson. */
+  role: string
+  /** Arbitrary, lesson-specific seed values the widgets read/write. */
+  initialState: Record<string, unknown>
+}
+
 export interface Lesson {
   id: string
   order: number
@@ -99,6 +113,8 @@ export interface Lesson {
   realWorldHook: string
   conceptSummary: string
   estimatedMinutes: number
+  /** Optional shared-world block; widgets read/write it via the scenario context. */
+  scenario?: Scenario
   steps: Step[]
 }
 

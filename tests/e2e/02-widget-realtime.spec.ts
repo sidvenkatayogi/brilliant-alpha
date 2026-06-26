@@ -2,25 +2,25 @@ import { test, expect } from '@playwright/test'
 import { signUp, openLessonOne } from './helpers'
 
 // Scenario 2 — a learner manipulates an interactive widget and the visual
-// responds in real time (the trial count jumps as the sampler runs).
-test('manipulating the sampler updates the visual live', async ({ page }) => {
+// responds in real time (growing the insurance book of business satisfies the
+// step's completion gate, which unlocks Continue).
+test('manipulating the insurance desk updates the visual live', async ({ page }) => {
   await signUp(page)
   await openLessonOne(page)
 
-  // Advance to the interactive sampler step.
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await page.getByText('Anywhere from 0 to 3').click()
+  // Advance to the interactive insurance-desk step.
+  await page.getByRole('button', { name: 'Continue' }).click() // concept -> predict
+  await page.getByText('Most years, but the odd bad year').click()
   await page.getByRole('button', { name: 'Lock in my guess' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
+  await page.getByRole('button', { name: 'Continue' }).click() // predict -> interactive
 
-  const count = page.getByTestId('trial-count')
-  await expect(count).toHaveText('6')
+  // The widget is present and the completion gate is not yet satisfied.
+  await expect(page.getByTestId('insurance-desk')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Keep going/ })).toBeVisible()
 
-  // Running the experiment drives the count up immediately.
-  await page.getByRole('button', { name: /Run to/ }).click()
-  await expect(count).toHaveText('10,000')
+  // Growing the business drives the gated `customers` param past its threshold…
+  await page.getByTestId('scale-2000').click()
 
-  // And the completion gate is now satisfied, so Continue is enabled.
+  // …so Continue immediately becomes enabled (the visual responded live).
   await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled()
 })

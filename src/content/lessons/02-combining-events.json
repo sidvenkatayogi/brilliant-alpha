@@ -1,80 +1,106 @@
 {
   "id": "combining-events",
   "order": 2,
-  "title": "Combining Events",
+  "title": "The Redundancy Bay",
   "subtitle": "AND, OR, and independence",
-  "realWorldHook": "A jet's three hydraulic systems each fail on 1 in 1,000 flights — yet all three failing at once is about 1 in a billion.",
-  "conceptSummary": "Independent chances multiply for AND; overlapping chances must avoid double-counting for OR.",
+  "realWorldHook": "One hydraulic system fails on 1 in 10 flights — scary. Bolt on two more independent backups and total failure drops to about 1 in 1,000.",
+  "conceptSummary": "Independent failures multiply for AND (catastrophe gets rarer fast), but 'at least one fails' adds up for OR (maintenance gets more common).",
   "estimatedMinutes": 5,
+  "scenario": {
+    "role": "You're an aircraft safety engineer.",
+    "initialState": { "flightsFlown": 0 }
+  },
   "steps": [
     {
       "id": "hook",
       "type": "concept",
-      "title": "Why redundancy works",
-      "body": "A passenger jet carries multiple [[independent|Two events are independent when one happening tells you nothing about the other — like two separate systems, or two separate dice. For independent events, the chance they *all* happen is the product of their individual chances.]] hydraulic systems. If one fails on 1 in 1,000 flights, the chance *all three* fail at once is about 1 in a billion — because independent chances multiply.\n\nThat's why redundancy works, and why 'and' and 'or' behave so differently. Let's see it as area."
+      "title": "Two ways to build a safe plane",
+      "body": "A passenger jet needs to almost never lose all hydraulic power. There are two ways to get there.\n\nYou could install **one really good system** that fails only 1 in 100 flights. Or you could bolt on **three cheaper backups**, each failing 1 in 10, and let the plane fly as long as **at least one** still works — because the systems fail [[independent|Two events are independent when one happening tells you nothing about the other — two separate hydraulic systems, sealed off from each other, fail on their own. For independent events, the chance they *all* fail is the product of their individual chances.]]ly of each other.\n\nWhich design is safer? You're about to fly the same fleet through both."
     },
     {
-      "id": "concept-area",
-      "type": "concept",
-      "title": "Probability as area",
-      "body": "Picture every possible outcome as points filling a square — total area 1. Event **A** is a vertical band whose width is P(A); event **B** is a horizontal band whose height is P(B).\n\n[[AND|The chance that *both* events happen at once. For independent events you multiply the two probabilities — on the square it's the rectangle where the two bands cross.]] is where the bands cross — a rectangle. For independent events its area is width × height = P(A) × P(B).\n\n[[OR|The chance that *at least one* event happens. You add the two probabilities, then subtract the crossing rectangle so it isn't counted twice.]] is everything either band covers — but the crossing rectangle sits in both, so you subtract it once.",
-      "visual": { "type": "probabilityArea", "interactive": false, "props": { "mode": "and", "pA": 0.5, "pB": 0.4 } }
-    },
-    {
-      "id": "predict-and",
+      "id": "predict-all-fail",
       "type": "predict",
-      "prompt": "Two independent events: A happens 50% of the time, B happens 40%. What's the chance they *both* happen?",
+      "prompt": "Three independent backups, each failing 1 in 10 flights. How often do **all three** fail on the same flight?",
       "format": "multiple_choice",
       "options": [
-        { "id": "a", "label": "90% — add them" },
-        { "id": "b", "label": "45% — average them" },
-        { "id": "c", "label": "20% — multiply them" }
+        { "id": "a", "label": "About 1 in 30 — add the three chances up" },
+        { "id": "b", "label": "About 1 in 1,000 — they multiply together" },
+        { "id": "c", "label": "Still about 1 in 10 — backups don't really help" }
       ],
-      "revealMessage": "For independent events you multiply: 50% × 40% = 20%. Let's see why that's the crossing rectangle.",
+      "revealMessage": "Lock that in — then fly the same fleet through both designs at once and see which is safer.",
       "revealByOption": {
-        "a": "Adding (90%) is the OR move — and it even double-counts, which is coming up. For 'both at once' you multiply.",
-        "b": "Averaging isn't it. Independent ANDs multiply: 50% × 40% = 20% — a fraction of a fraction.",
-        "c": "Exactly — independent chances multiply: 50% × 40% = 20%. Watch it become a rectangle."
+        "a": "That's the gut answer, and it's the classic trap: independent failures **multiply**, they don't add. Fly the fleet and watch what the two grids do.",
+        "b": "Bold call — and it's exactly right. Let's prove it against the single 1-in-100 system.",
+        "c": "Backups help an astonishing amount — far more than intuition says. Let's see it."
       }
     },
     {
-      "id": "explore-and",
+      "id": "fly-the-fleet",
       "type": "interactive",
-      "prompt": "Drag the corner. The bright rectangle where the bands cross *is* P(A and B) — its area is width × height. Shrink either band and the overlap shrinks faster: that's why stacking independent chances makes 'both' rare.",
-      "widget": { "type": "probabilityArea", "props": { "mode": "and", "pA": 0.5, "pB": 0.4 } }
+      "prompt": "Fly the same **1,000 flights** through both designs and see which is safer. The left plane has **three backups, each failing 1 in 10**; the right has **one system failing 1 in 100**. Press *Fly the fleet*, then count the red crashes in each grid.",
+      "widget": {
+        "type": "redundancyBay",
+        "props": { "mode": "compare" }
+      },
+      "completion": { "type": "reaches", "param": "flightsFlown", "value": 1000 }
     },
     {
-      "id": "explore-or",
+      "id": "your-turn",
       "type": "interactive",
-      "prompt": "Now OR — at least one. The L-shape is everything either band covers. Adding P(A) + P(B) counts the crossing rectangle twice, so it's marked to subtract once: P(A or B) = P(A) + P(B) − P(A and B).",
-      "widget": { "type": "probabilityArea", "props": { "mode": "or", "pA": 0.5, "pB": 0.4 } }
+      "prompt": "Now experiment with your own design. Drag the sliders to change how many backup systems you stack and how often each one fails — the live odds update as you go. Flip on **Compare** to put your plane next to a single 1-in-100 system, then *Fly the fleet*.",
+      "widget": {
+        "type": "redundancyBay",
+        "props": { "mode": "sandbox" }
+      },
+      "completion": { "type": "reaches", "param": "flightsFlown", "value": 1000 }
     },
     {
-      "id": "q-overlap",
+      "id": "q-and",
       "type": "question",
-      "prompt": "With P(A) = 50% and P(B) = 40%, adding gives 90% — but the true P(A or B) is 70%. Why does adding overshoot?",
+      "prompt": "Recall how the two fleets compared: the triple backup (three systems each failing 1 in 10) crashed about *ten times less often* than the single system failing 1 in 100. Why are three mediocre backups safer than one better system?",
       "format": "multiple_choice",
       "options": [
-        { "id": "a", "label": "The 20% where A and B both happen is inside each band, so adding counts it twice" },
-        { "id": "b", "label": "A and B can never happen at the same time" },
-        { "id": "c", "label": "The events aren't independent" }
+        { "id": "a", "label": "Independent failure chances multiply: 1/10 × 1/10 × 1/10 = 1/1,000, far below the single system's 1/100" },
+        { "id": "b", "label": "Three systems are simply three times stronger than one" },
+        { "id": "c", "label": "The single system was just built badly; the redundancy didn't really matter" }
       ],
       "answer": { "correctOptionId": "a" },
       "feedback": {
-        "correct": "Exactly — the crossing rectangle is P(A)×P(B) = 20%. It lives in both bands, so adding counts it twice; subtract it once and you land at 70%.",
-        "incorrect": "Look at the crossing rectangle — the part in *both* bands. Adding 50% + 40% counts that slice twice, which is how you sail past the true 70%.",
+        "correct": "Exactly — for an AND of independent events you multiply: 1/10 × 1/10 × 1/10 = 1/1,000, which is ten times rarer than the single system's 1/100. Stacking backups multiplies the safety.",
+        "incorrect": "It's the multiplying. For all three independent systems to fail at once: 1/10 × 1/10 × 1/10 = 1/1,000 — ten times rarer than the single system's 1/100. Redundancy multiplies.",
         "byOption": {
-          "b": "They can — that's the whole 20% overlap rectangle where both happen at once. That shared slice is exactly what gets double-counted.",
-          "c": "Independence is fine here — even independent events overlap. That overlap (20%) is precisely the part adding counts twice."
+          "b": "'Three times stronger' is additive thinking. The real win is multiplicative: 1/10 × 1/10 × 1/10 = 1/1,000, which is ten times safer than the single 1-in-100 system, not three.",
+          "c": "It's not about build quality — it's the math. Three [[independent|One system failing tells you nothing about the others; they don't help or fix one another. That's exactly why their failure chances multiply.]] backups only all fail together 1/10 × 1/10 × 1/10 = 1/1,000 of the time, beating a single 1-in-100 system by tenfold."
         }
       },
-      "hint": "How big is the bright overlap rectangle, and how many times does 'just add' count it?"
+      "hint": "For an AND of independent events, do you add the three 1-in-10 chances or multiply them? Compare the result to 1 in 100."
+    },
+    {
+      "id": "q-or",
+      "type": "question",
+      "prompt": "Recall how the two fleets compared: the triple-backup plane flagged *far more* flights for maintenance than the single system, even though it crashed far less. Why do crashes and maintenance flags move in opposite directions as you add parts?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "a", "label": "'At least one fails' (OR) adds up across more parts, while 'all fail' (AND) multiplies down — so more systems means more maintenance but rarer crashes" },
+        { "id": "b", "label": "The backup systems are just lower quality than the single one" },
+        { "id": "c", "label": "A crash and a maintenance flag are really the same event" }
+      ],
+      "answer": { "correctOptionId": "a" },
+      "feedback": {
+        "correct": "Exactly — 'all fail' (AND) shrinks fast, but 'at least one fails' (OR) grows with more parts. The triple backup is far safer from a crash, yet trips maintenance more often because there are simply more parts that can flag.",
+        "incorrect": "Crashes are the AND of every system failing, which multiplies down. Maintenance is the OR — 'at least one failed' — and more parts means more chances for *something* to flag.",
+        "byOption": {
+          "b": "Each backup fails 1 in 10 — worse than the single 1-in-100 system, yes — but maintenance climbs because OR counts *any* single failure, and three parts give three ways for one to trip.",
+          "c": "They're different events, and they're not [[mutually exclusive|Two events are mutually exclusive when they can't both happen at once. A crash (all systems failed) is actually a special case *inside* 'at least one failed', so it isn't separate from maintenance — it's the worst corner of it.]]: a crash is the rare corner of 'at least one failed', while most maintenance flags are flights that lost just one system and landed fine."
+        }
+      },
+      "hint": "Crashes need *every* system to fail (AND). Maintenance needs only *one* (OR). Which one grows as you add parts?"
     },
     {
       "id": "summary",
       "type": "concept",
-      "title": "AND multiplies, OR adds-then-trims",
-      "body": "For independent events, AND multiplies — which is why stacking three rare failures makes catastrophe astronomically unlikely.\n\nOR adds, but you subtract [[the overlap|The crossing rectangle that belongs to *both* events. Add the two probabilities and you count it twice, so you subtract it once to get the true OR.]] so nothing is counted twice.\n\nNext: what happens to a probability once you *know* something."
+      "title": "AND shrinks, OR grows",
+      "body": "For independent events, **AND multiplies** — which is why stacking three rare failures makes catastrophe astronomically unlikely (1/10 × 1/10 × 1/10 = 1/1,000).\n\n**OR** is 'at least one' — and it *grows* with more parts, because every extra system is one more thing that can flag for maintenance.\n\nThat's the engineer's trade: more redundancy buys you dramatically safer flights at the cost of more frequent — but harmless — maintenance. Next: what happens to a probability once you *know* something."
     }
   ]
 }

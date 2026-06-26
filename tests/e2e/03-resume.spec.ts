@@ -7,12 +7,10 @@ test('leaving mid-lesson resumes at the exact step', async ({ page }) => {
   await signUp(page)
   await openLessonOne(page)
 
-  // Advance a few steps into the lesson.
+  // Advance into the lesson, onto the predict step (step 2 of 6).
   await page.getByRole('button', { name: 'Continue' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  // Now on the predict step (step 3 of 7).
-  await expect(page.getByText(/How many sixes/)).toBeVisible()
-  await expect(page.getByText('3/7')).toBeVisible()
+  await expect(page.getByText('turn a profit')).toBeVisible()
+  await expect(page.getByText('2/6')).toBeVisible()
 
   // Leave to the dashboard.
   await page.getByRole('button', { name: /Leave/ }).click()
@@ -24,6 +22,6 @@ test('leaving mid-lesson resumes at the exact step', async ({ page }) => {
   await page.getByRole('button', { name: /Continue where you left off/ }).click()
 
   // Back on the exact step we left.
-  await expect(page.getByText(/How many sixes/)).toBeVisible()
-  await expect(page.getByText('3/7')).toBeVisible()
+  await expect(page.getByText('turn a profit')).toBeVisible()
+  await expect(page.getByText('2/6')).toBeVisible()
 })

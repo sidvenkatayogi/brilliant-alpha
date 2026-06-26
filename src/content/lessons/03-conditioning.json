@@ -1,73 +1,73 @@
 {
   "id": "conditioning",
   "order": 3,
-  "title": "Conditioning",
-  "subtitle": "P(A given B): updating on what you know",
-  "realWorldHook": "Every spam filter and every 'customers who bought this also bought…' runs on conditioning — updating a probability once you know something.",
-  "conceptSummary": "Conditioning on B shrinks the world to B, then recounts how often A happens inside it.",
+  "title": "The Spam Inbox",
+  "subtitle": "P(A given B): conditioning on what you know",
+  "realWorldHook": "Every spam filter and every 'customers who bought this also bought…' runs on conditioning — updating a probability once you know one more thing.",
+  "conceptSummary": "Conditioning on B shrinks the world to just the B cases, then recounts how often A happens inside that smaller world.",
   "estimatedMinutes": 5,
+  "scenario": {
+    "role": "You're tuning an email spam filter.",
+    "initialState": { "total": 100, "spam": 10, "conditionsApplied": 0 }
+  },
   "steps": [
     {
       "id": "hook",
       "type": "concept",
-      "title": "A different question",
-      "body": "'What's the chance of rain?' is a different question from 'what's the chance of rain *given* the sky is grey?'\n\nEvery spam filter, every Netflix 'because you watched…', every recommendation engine runs on this move: updating a probability once you already know something.\n\nThat move is called [[conditioning|Updating a probability to account for something you now know. You ignore every case where the condition didn't hold, then recount within what's left.]]."
+      "title": "100 emails, 10 of them spam",
+      "body": "Here's your inbox: 100 emails, and about **10** are spam.\n\nA 'spam filter' isn't magic. It's just one question, asked well: *given a clue, how likely is spam now?*\n\nThat move — narrowing the world to the emails with a clue, then recounting — is [[conditioning|Updating a probability to account for something you now know. You ignore every case where the condition didn't hold, then recount within what's left.]].",
+      "visual": { "type": "spamInbox", "interactive": false, "props": {} }
     },
     {
-      "id": "concept-restrict",
-      "type": "concept",
-      "title": "Shrinking the world",
-      "body": "P(A | B) means: throw away every roll where B didn't happen, then ask how often A happens among what's left.\n\nB becomes your new [[whole world|In probability this is the *sample space* — the full set of outcomes you're considering. Conditioning replaces it with just the slice where the condition holds.]]. The [[denominator|The number you divide by — the size of the world you're counting within. Conditioning shrinks it, which is why the same event's probability can jump.]] shrinks — and the probability can change a lot.\n\nWe'll track one target: **A = the sum is 10 or more** (a big total). Then we'll condition on what the first die shows."
-    },
-    {
-      "id": "predict-conditional",
+      "id": "predict-freecaps",
       "type": "predict",
-      "prompt": "Across all 36 rolls, P(sum ≥ 10) is 6/36 — about 1 in 6. Now you learn the *first die landed on 6*. What's the chance of a sum of 10 or more now?",
+      "prompt": "Overall, ~10% of these emails are spam — that's the [[base rate|The overall frequency of something before you condition on any clue. Here, 10% of all email is spam.]].\n\nNow imagine narrowing down to only the emails whose subject is **ALL CAPS** and screams **'FREE MONEY'**. Of *those*, what fraction do you think is spam?",
       "format": "multiple_choice",
       "options": [
-        { "id": "a", "label": "Still about 1 in 6 — the dice are independent" },
-        { "id": "b", "label": "Much higher — around 1 in 2" },
-        { "id": "c", "label": "Zero" }
+        { "id": "a", "label": "Still about 10% — a clue doesn't change much" },
+        { "id": "b", "label": "Maybe 30% or so — a bit higher" },
+        { "id": "c", "label": "Most of them — around 80%" }
       ],
-      "revealMessage": "Let's collapse the grid to just the rolls where the first die is 6, and recount.",
+      "revealMessage": "Next you'll filter the inbox down to just the 'FREE MONEY, ALL CAPS' emails and recount the spam inside that slice.",
       "revealByOption": {
-        "a": "Careful — the *dice* are independent, but the event 'sum ≥ 10' is not independent of the first die. Knowing it's a 6 really does shift the odds. Let's see.",
-        "b": "Right instinct — knowing the first die is a 6 makes a big total much more likely. Let's confirm it on the grid.",
-        "c": "Not zero — a 6 paired with a 4, 5, or 6 already clears 10. Let's count how often."
+        "a": "It feels like one clue shouldn't matter, but imagine throwing away every email that isn't ALL CAPS and screaming 'FREE'. The slice that's left looks very different.",
+        "b": "You're right that it climbs — but it climbs much further than 30%. Honest mail almost never shouts 'FREE MONEY' in all caps, so that slice is mostly spam.",
+        "c": "That's the instinct to confirm — honest mail rarely screams 'FREE MONEY' in all caps, so the few that do are mostly spam. Let's count it."
       }
     },
     {
       "id": "explore-filter",
       "type": "interactive",
-      "prompt": "Toggle the condition. Every roll where the first die isn't a 6 is flung away, and the survivors zoom up to fill the frame — watch P(sum ≥ 10) regrow against that smaller world.",
-      "widget": { "type": "conditionZoom", "props": { "condition": "firstDie6", "target": "sumGte10" } }
+      "prompt": "Tap the clue chips to condition the inbox. Watch the emails without the clue slide away, the survivors repack, and **P(spam) in the current view** leap as the world shrinks. Try 'FREE' + 'ALL CAPS' together.",
+      "widget": { "type": "spamInbox", "props": {} },
+      "completion": { "type": "reaches", "param": "conditionsApplied", "value": 1 }
     },
     {
-      "id": "q-denominator",
+      "id": "q-why-jump",
       "type": "question",
-      "prompt": "Conditioning on 'first die = 6' pushed P(sum ≥ 10) from about 17% up to 50%. Why?",
+      "prompt": "Conditioning on 'FREE MONEY, ALL CAPS' shoved P(spam) from ~10% up to ~80%. Why did the spam percentage jump so far?",
       "format": "multiple_choice",
       "options": [
-        { "id": "a", "label": "The world shrank to the 6 rolls starting with a 6, and 3 of them (sums 10, 11, 12) clear 10" },
-        { "id": "b", "label": "Knowing the first die changes what the second die will roll" },
-        { "id": "c", "label": "It doesn't actually change" }
+        { "id": "a", "label": "Filtering restricts the world to that slice and recounts — honest mail rarely shouts 'FREE', so spam dominates what's left" },
+        { "id": "b", "label": "Adding the clue created new spam emails that weren't there before" },
+        { "id": "c", "label": "The percentage didn't really change; it just looks bigger" }
       ],
       "answer": { "correctOptionId": "a" },
       "feedback": {
-        "correct": "Right — among the 6 rolls with a 6 first, three (6+4, 6+5, 6+6) reach 10 or more. That's 3 out of 6 = 50%, counted against the new, smaller denominator.",
-        "incorrect": "Conditioning doesn't touch the second die — it changes which rolls you're allowed to count. Recount inside the slice where the first die is 6.",
+        "correct": "Right — conditioning shrinks the world. Once you keep only the 'FREE MONEY, ALL CAPS' emails, the honest ones are mostly gone and spam dominates what's left. Same emails, sharper question.",
+        "incorrect": "Don't ask 'how much email is spam overall' — ask 'among emails with *this clue*, how much is spam.' When you condition on the clue, that slice becomes your whole world. Recount inside it.",
         "byOption": {
-          "b": "The second die is still a fair, independent roll. What changed is the set of outcomes you count over — the denominator, not the die.",
-          "c": "It really does change: 6/36 (17%) overall becomes 3/6 (50%) once you know the first die is a 6. The smaller world has a much higher fraction of big totals."
+          "b": "No new emails appear — recall how the inbox just collapsed down to a smaller slice. Filtering only changes *which* emails you're allowed to count. Spam's share looks bigger because the honest mail dropped out of the slice.",
+          "c": "It genuinely changes: 10/100 overall becomes ~8/10 inside the 'FREE MONEY, ALL CAPS' slice. The fraction is computed against a much smaller, spam-heavy denominator."
         }
       },
-      "hint": "Among just the 'first die = 6' rolls, how many reach a sum of 10 or more? Count those over 6."
+      "hint": "Among just the ALL-CAPS-'FREE' emails, how many are spam versus the total in that slice? Count spam over the new, smaller denominator."
     },
     {
       "id": "summary",
       "type": "concept",
-      "title": "Conditioning = new denominator",
-      "body": "To condition on B, make B your entire world and recount A inside it.\n\nDon't ask 'how likely is A overall' — ask 'among the B cases, how often is A?'\n\nThis one idea is the engine behind the most counterintuitive result in all of probability. That's next."
+      "title": "The filter is just conditioning",
+      "body": "To condition on a clue B, make B your entire world and recount A inside it.\n\nDon't ask 'how likely is spam overall' — ask 'among the emails with *this clue*, how often is spam?' The [[conditional probability|P(A given B): the chance of A once you restrict attention to the cases where B is true. It can be wildly different from P(A) alone.]] can be wildly different from the [[base rate|The overall frequency before conditioning — here, the ~10% of all email that is spam.]].\n\nThis one move — restrict the world, then recount — is the engine behind the most counterintuitive result in all of probability. That's next."
     }
   ]
 }

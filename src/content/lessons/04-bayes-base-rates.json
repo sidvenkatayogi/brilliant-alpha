@@ -1,100 +1,112 @@
 {
   "id": "bayes-base-rates",
   "order": 4,
-  "title": "Bayes & Base Rates",
-  "subtitle": "Why a '99% accurate' positive can still mean you're fine",
-  "realWorldHook": "A '99% accurate' test for a rare disease comes back positive. Most people — including many doctors — think you almost certainly have it. They're wrong, often badly.",
-  "conceptSummary": "With a rare condition, the few true positives are swamped by false positives from the huge healthy group.",
+  "title": "The Screening Clinic",
+  "subtitle": "Why a 99%-accurate positive can still mean you're fine",
+  "realWorldHook": "You run a screening clinic. A '99% accurate' test for a rare disease comes back positive, and a worried patient asks if they're going to die. Most people — including many doctors — get the honest answer badly wrong.",
+  "conceptSummary": "With a rare condition, the few true positives are swamped by false positives drawn from the huge healthy group.",
   "estimatedMinutes": 6,
+  "scenario": {
+    "role": "You run a screening clinic.",
+    "initialState": {
+      "population": 1000,
+      "prevalence": 0.001,
+      "sensitivity": 0.99,
+      "falsePositive": 0.05,
+      "ran": 0
+    }
+  },
   "steps": [
     {
       "id": "hook",
       "type": "concept",
-      "title": "The positive result that fools doctors",
-      "body": "You take a test for a rare disease. It's '99% accurate.' It comes back positive.\n\nMost people — including many *doctors* — think you almost certainly have it. They're wrong, often badly.\n\nThe same trap convicts innocent people in court and flags innocent travelers at airports. This lesson rewires how you read a positive result."
+      "title": "Welcome to your clinic",
+      "body": "Today you run a screening clinic. **1,000 people** line up for a test that's *'99% accurate'* for a disease only **1 in 1,000** people actually have.\n\nMost will test negative. A small pile will test positive. Then one worried patient who came back positive will look you in the eye and ask: *am I going to die?*\n\nThe number you owe them is not the one almost everyone expects."
     },
     {
       "id": "predict-sick",
       "type": "predict",
-      "prompt": "A disease affects 1 in 1,000 people. A test [[catches 99% of real cases|This is the test's *sensitivity* — the share of truly sick people it correctly flags as positive. Even at 99%, it can't overcome a very rare disease.]] and has a 5% [[false-positive rate|How often the test says 'positive' for someone who is actually healthy. A small rate across a huge healthy group still produces a flood of false alarms.]]. You test positive. What's the chance you actually have it?",
+      "prompt": "You tested positive on a 99%-accurate test for a disease **1 in 1,000** people have. What's the chance you *actually* have it?\n\nThe test [[catches 99% of real cases|This is the test's *sensitivity* — the share of truly sick people it correctly flags as positive. Even at 99%, it can't overcome a very rare disease.]] and only [[false-alarms 5% of the time|The *false-positive rate*: how often the test says 'positive' for someone who is actually healthy. A small rate across a huge healthy group still produces a flood of false alarms.]].",
       "format": "multiple_choice",
       "options": [
         { "id": "a", "label": "About 99% — the test is 99% accurate" },
         { "id": "b", "label": "Around 80%" },
-        { "id": "c", "label": "Under 50%" }
+        { "id": "c", "label": "Under 10%" }
       ],
-      "revealMessage": "Lock it in. Now let's lay out 1,000 people and just count.",
+      "revealMessage": "Lock it in. Now run the clinic and just count the people.",
       "revealByOption": {
-        "a": "That's the answer almost everyone gives — and it's the trap this lesson is about. The test really is accurate, yet the truth is far lower. Let's count 1,000 people.",
-        "b": "Lower than most people guess — but still way too high. Let's lay out 1,000 people and count the real positives against the false ones.",
-        "c": "You're onto it — and it's even more extreme than most believe. Let's count it out."
+        "a": "That's the answer almost everyone gives — and it's the trap this clinic is about. The test really is accurate, yet the honest answer is far lower. Let's run 1,000 people and count.",
+        "b": "Lower than most people guess — but still way too high. Run the clinic and count the real positives against the false ones.",
+        "c": "You're onto it — and it's even more extreme than most believe. Run the clinic and watch the positive pile."
       }
     },
     {
-      "id": "explore-array",
+      "id": "run-clinic",
       "type": "interactive",
-      "prompt": "Here are 1,000 people. Drag the sliders for [[how common the disease is|Called the *prevalence* or base rate — the fraction of all people who actually have the condition before anyone is tested.]], how good the test is at catching it, and its false-positive rate. Watch how many positives are real versus false.",
+      "prompt": "Run your clinic. Drag the sliders for **how rare the disease is**, how good the test is at catching it, and how often it false-alarms — the grid and the live percentage update instantly. Watch the positive pile: a few *real* cases in rose, buried under the *false alarms* in amber.",
       "widget": {
-        "type": "bayesIconArray",
-        "props": { "population": 1000, "prevalence": 0.001, "sensitivity": 0.99, "falsePositive": 0.05 }
-      }
+        "type": "screeningClinic",
+        "props": { "prevalence": 0.001, "sensitivity": 0.99, "falsePositive": 0.05 }
+      },
+      "completion": { "type": "reaches", "param": "ran", "value": 1 }
     },
     {
       "id": "q-why-low",
       "type": "question",
-      "prompt": "Of everyone who tests positive, only a small fraction actually have the disease. Why?",
+      "prompt": "Of everyone who tested positive, only about **9%** actually have the disease. How can a 99%-accurate test be right about your positive result less than 1 in 10 times?",
       "format": "multiple_choice",
       "options": [
-        { "id": "a", "label": "The handful of true positives is swamped by false positives from the huge healthy group" },
-        { "id": "b", "label": "The test is broken" },
-        { "id": "c", "label": "99% accuracy means 99% of positives are correct" }
+        { "id": "a", "label": "The few true positives are swamped by false positives drawn from the huge healthy group" },
+        { "id": "b", "label": "The test must be broken or miscalibrated" },
+        { "id": "c", "label": "'99% accurate' means 99% of positives are correct" }
       ],
       "answer": { "correctOptionId": "a" },
       "feedback": {
-        "correct": "That's it. About 1 real case tests positive, but ~5% of the other 999 healthy people also test positive — that's ~50 false alarms drowning out the 1 true one.",
-        "incorrect": "Count two groups separately: the tiny sick group and the enormous healthy group. A small error rate on a huge group produces a lot of false positives.",
+        "correct": "Surprised? The test is accurate. Your *conclusion* still flips. With a rare disease, a handful of true positives gets buried under false positives pulled from the enormous healthy crowd. Count the people, not the percentages.",
+        "incorrect": "The '99% accurate' is the test's reliability — not the chance you're sick given a positive. Think back to how the positive pile divided: most of it was healthy people the test false-flagged.",
         "byOption": {
-          "b": "The test works exactly as advertised. The surprise comes from the base rate, not a faulty test.",
-          "c": "Accuracy is about how the test treats sick and healthy people — not about your positives. With a rare disease, most positives still come from healthy people."
+          "b": "The test works exactly as advertised. The surprise comes from the [[base rate|How common the disease is *before* anyone is tested — here just 1 in 1,000. When it's this low, most positives are false no matter how good the test.]], not a faulty machine.",
+          "c": "Accuracy describes how the test treats sick and healthy people — not your positive. With a rare disease, most positives still come from the healthy group the test [[false-flagged|A *false positive*: a healthy person the test wrongly marks as positive. Five percent of a thousand healthy people is fifty false alarms.]]."
         }
       },
-      "hint": "5% of 999 healthy people is about 50 false positives. How does that compare to the ~1 true positive?"
+      "hint": "5% of ~999 healthy people is about 50 false positives. How does that compare to the ~1 true positive?"
     },
     {
-      "id": "concept-formula",
+      "id": "concept-frequencies",
       "type": "concept",
-      "title": "The same count, written as a formula",
-      "body": "Counting the dots is [[Bayes' theorem|The rule for updating a probability after evidence: weigh how likely the evidence is when the hypothesis is true against how common that hypothesis was to begin with.]] in disguise. The chance a positive is real is the true positives over *all* positives — and because each group is its rate times how many people it covers, the enormous healthy group makes the false-positive term dominate the bottom of the fraction.",
+      "title": "Count people, not percentages",
+      "body": "Percentages hide the trap; **natural frequencies** expose it. Don't say '99% accurate' — say it in *people*:\n\nOut of 1,000, about **1** person is sick and tests positive. Of the other 999 healthy people, about **50** also test positive. So ~51 people hold a positive slip, and only **1** is truly sick.\n\nThat's roughly 1 in 51 — about **2%**. The machine never lied. The crowd is just overwhelmingly healthy."
+    },
+    {
+      "id": "q-formula",
+      "type": "question",
+      "prompt": "Here's the same count written as a formula. Reading it, what does the chance a positive is real actually equal?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "a", "label": "True positives divided by all positives (true + false)" },
+        { "id": "b", "label": "The test's accuracy, 99%" },
+        { "id": "c", "label": "True positives divided by the whole population of 1,000" }
+      ],
+      "answer": { "correctOptionId": "a" },
+      "feedback": {
+        "correct": "Exactly — and the formula only makes sense once the intuition has landed. The chance a positive is real is the rose count over the rose-plus-amber count: true positives over *all* positives.",
+        "incorrect": "Look at the fraction: the top is the real cases, and the bottom is *every* positive slip — real and false alarm alike.",
+        "byOption": {
+          "b": "That's the input, not the answer. 99% is how the test treats people; the formula divides the real positives by the whole positive pile to get your chance.",
+          "c": "The denominator isn't everyone — it's everyone who *tested positive*. The healthy negatives never enter this fraction."
+        }
+      },
+      "hint": "Cover the negatives entirely. Of just the positive slips, what share are the real (rose) ones?",
       "visual": {
         "type": "bayesFormula",
-        "interactive": false,
         "props": { "population": 1000, "prevalence": 0.001, "sensitivity": 0.99, "falsePositive": 0.05 }
       }
     },
     {
-      "id": "q-base-rate",
-      "type": "question",
-      "prompt": "Now slide the disease to be far more common — say 1 in 5. What happens to the chance a positive is real?",
-      "format": "multiple_choice",
-      "options": [
-        { "id": "a", "label": "It rises sharply — more positives are now true" },
-        { "id": "b", "label": "It stays the same; only the test matters" }
-      ],
-      "answer": { "correctOptionId": "a" },
-      "feedback": {
-        "correct": "Right. The base rate is half the story. Common disease → most positives are real. Rare disease → most positives are false. Same test, opposite conclusion.",
-        "incorrect": "Try it on the array: make the disease common and the true-positive block grows much faster than the false-positive block.",
-        "byOption": {
-          "b": "The test never changed — yet the answer flips. That's the whole point: you can't read a positive without the base rate."
-        }
-      },
-      "hint": "The test's accuracy didn't change — only how common the disease is. Watch the true-positive block grow."
-    },
-    {
-      "id": "summary",
+      "id": "payoff",
       "type": "concept",
-      "title": "Always ask: how rare is it?",
-      "body": "A test result is only half the story. The other half is the [[base rate|How common something is *before* any test — here 1 in 1,000. When the base rate is low, most positive results are false no matter how accurate the test.]] — how common the thing is *before* you tested.\n\nThe test is accurate; your conclusion still flips. Whenever someone quotes you a '99% accurate' result, your first question should be: how rare is what it's testing for?\n\nLast lesson: the quiet number that runs every casino."
+      "title": "You now read 'positive' correctly",
+      "body": "This same trap reaches far beyond your clinic. It convicts the innocent when a courtroom hears '1-in-a-million DNA match' and forgets how many innocent people that still implicates ([[the prosecutor's fallacy|Confusing how rare the evidence is with how likely the suspect is guilty — exactly the base-rate slip you just untangled. A rare match across millions of people still points at several innocents.]]). It flags innocent travelers when a rare threat meets a huge crowd.\n\nWhenever someone hands you a '99% accurate' result, your first question is now reflexive: *how rare is the thing it's testing for?* Count the people, and the honest answer appears."
     }
   ]
 }

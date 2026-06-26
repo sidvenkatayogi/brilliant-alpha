@@ -1,96 +1,113 @@
 {
   "id": "long-run",
   "order": 1,
-  "title": "Chance & the Long Run",
+  "title": "The Insurance Desk",
   "subtitle": "What a probability actually means",
-  "realWorldHook": "An insurance company has no idea whether you'll crash your car this year — but across two million drivers, the crash rate barely moves.",
-  "conceptSummary": "Probability is long-run relative frequency: unpredictable one at a time, predictable in bulk.",
+  "realWorldHook": "You run a small-town car-insurance company. You can't predict who crashes — but watch what 'unpredictable' does to your bank account as the business grows.",
+  "conceptSummary": "Probability is long-run relative frequency: a single crash is unpredictable, but the crash rate is rock-steady at scale.",
   "estimatedMinutes": 5,
+  "scenario": {
+    "role": "You run a small-town car-insurance company.",
+    "initialState": {
+      "premium": 800,
+      "customers": 10,
+      "trueCrashRate": 0.05,
+      "payout": 12000,
+      "bankroll": 5000,
+      "yearsRun": 0,
+      "history": []
+    }
+  },
   "steps": [
     {
       "id": "hook",
       "type": "concept",
-      "title": "Why insurers aren't gambling",
-      "body": "An insurance company has no idea whether *you* will crash your car this year. You're one person — unpredictable.\n\nBut across two million drivers, the crash rate barely moves from year to year. That eerie stability is the only reason they can price a policy at all.\n\nProbability is the math of exactly this: unpredictable one at a time, predictable in bulk."
-    },
-    {
-      "id": "concept-meaning",
-      "type": "concept",
-      "title": "What a probability really is",
-      "body": "When we say a die has a [[1-in-6 chance|A die has six equally likely faces, so over many rolls a six shows up about once every six times — roughly **16.7%**.]] of landing on a six, we don't mean the next roll is special.\n\nWe mean: roll it a *huge* number of times, and the fraction of sixes settles near 1/6.\n\nA probability is a [[long-run relative frequency|The fraction of times an outcome happens if you repeat the experiment a *huge* number of times. That settled fraction is exactly what we call its probability.]]. Up close, randomness is lumpy. Far away, it's smooth."
-    },
-    {
-      "id": "predict-sixes",
-      "type": "predict",
-      "prompt": "You roll a fair die 6 times. How many sixes do you expect to see?",
-      "format": "multiple_choice",
-      "options": [
-        { "id": "a", "label": "Exactly 1 — it's a 1-in-6 chance" },
-        { "id": "b", "label": "Anywhere from 0 to 3, easily" },
-        { "id": "c", "label": "Always 0 or 1" }
-      ],
-      "revealMessage": "Hold that thought. Instead of arguing about it — let's actually run the dice and watch.",
-      "revealByOption": {
-        "a": "That's the gut answer — '1-in-6 over six rolls' *feels* like exactly one. But watch what six rolls actually do.",
-        "b": "Good instinct — small batches scatter a lot. Let's see just how much.",
-        "c": "Even narrower than reality — six rolls quite often turn up 2 or 3 sixes. Let's watch."
+      "title": "Here's your town",
+      "body": "Ten drivers. Each pays you a premium to insure their car. Some year, one of them will crash and you'll write a big check.\n\nYou *can't* predict who — randomness is lumpy up close. So the whole company rides on a quiet bet: that the crowd, taken together, is far steadier than any single driver.\n\nThat tension — unsure about any one driver, betting the whole company on the crowd — is what probability is really about. In a moment you'll sit at the desk and run it yourself.",
+      "visual": {
+        "type": "insuranceDesk",
+        "interactive": false,
+        "props": { "customers": 10 }
       }
     },
     {
-      "id": "explore-sampler",
+      "id": "predict-profit",
+      "type": "predict",
+      "prompt": "You charge each driver **$800**. A crash costs you a $12,000 payout, and about 5% of drivers crash each year — so your *expected* claim is only ~**$600** per driver. With just 10 customers, will you turn a profit *every single year*?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "yes", "label": "Yes — $800 in, $600 expected out. The margin's positive, so I win every year." },
+        { "id": "mostly", "label": "Most years, but the odd bad year could sting." },
+        { "id": "no", "label": "No — with only 10 drivers the swings could wipe me out some years." }
+      ],
+      "revealMessage": "Let's stop arguing and actually run your company for a few years.",
+      "revealByOption": {
+        "yes": "That's the gut answer — positive margin *feels* like guaranteed profit. Run the desk and watch a single crash blow up a 10-driver year.",
+        "mostly": "Warmer — you sense the wobble. Let's see exactly how big a 'sting' a tiny book of business can take.",
+        "no": "Sharp instinct. Few customers means wild swings. Let's prove it, then watch the swings vanish at scale."
+      }
+    },
+    {
+      "id": "run-the-desk",
       "type": "interactive",
-      "prompt": "Drag the slider to roll the die more and more times. Watch the bars as the number of trials climbs past a thousand.",
+      "prompt": "Start at 10 drivers and hit **Run year** a few times — feel the bankroll lurch when someone crashes. Then **grow the business** to thousands of drivers and run again. Watch how the swings behave at scale.",
       "widget": {
-        "type": "coinSampler",
-        "props": { "sides": 6, "minTrials": 6, "maxTrials": 10000 }
+        "type": "insuranceDesk",
+        "props": {
+          "premium": 800,
+          "trueCrashRate": 0.05,
+          "payout": 12000,
+          "bankroll": 5000,
+          "customers": 10
+        }
       },
-      "completion": { "type": "reaches", "param": "trials", "value": 1000 }
+      "completion": { "type": "reaches", "param": "customers", "value": 2000 }
     },
     {
-      "id": "q-why-settle",
+      "id": "q-why-stable",
       "type": "question",
-      "prompt": "At just a handful of rolls the bars were all over the place; by several thousand they sat close to 1/6 (about 16.7%). Why?",
+      "prompt": "At 10 customers you booked a loss in some years even though every premium was profitable on average. At 5,000 your bankroll barely budged. Why?",
       "format": "multiple_choice",
       "options": [
-        { "id": "a", "label": "The die slowly becomes fair as you roll it" },
-        { "id": "b", "label": "Small samples are noisy; the average settles as trials grow" },
-        { "id": "c", "label": "Later rolls are more likely to be sixes to balance things out" }
+        { "id": "a", "label": "Bigger companies somehow make drivers crash less often." },
+        { "id": "b", "label": "Small samples are noisy; the average crash rate only shows up at scale." },
+        { "id": "c", "label": "After a few crashes the others become 'due' not to crash, so it evens out." }
       ],
       "answer": { "correctOptionId": "b" },
       "feedback": {
-        "correct": "Right — randomness is lumpy up close and smooth far away. Six rolls is too few to trust; six thousand is plenty.",
-        "incorrect": "Look at the spread of the early bars versus the late ones — the wobble shrinks as trials grow. That's the whole idea.",
+        "correct": "Right. Your premium was always profitable on average — but with 10 drivers, one bad year of crashes swamps the average. Scale is what turns a 'risky bet' into a stable business.",
+        "incorrect": "Think back to how your bankroll swung — you booked a loss in some years even though the math 'should' win. Few customers means wild swings; the average only rescues you at scale.",
         "byOption": {
-          "a": "The die is fair the entire time — nothing about it changes. What changes is how much the *average* of many rolls wobbles.",
-          "c": "That's the [[gambler's fallacy|The mistaken belief that past random results change the odds of future ones — like thinking a six is *due*. The die has no memory; each roll is still 1-in-6.]] — the die has no memory. Each roll is still 1-in-6; the average just steadies as you pile up more of them."
+          "a": "The crash rate is exactly 5% the whole time — your customers don't drive differently. What changes is how much the *average* of many drivers wobbles year to year.",
+          "c": "That's the [[gambler's fallacy|The mistaken belief that past random outcomes change future ones — that a crash makes others less likely, as if to 'balance out'. Each driver's risk is unchanged; only the average steadies with more of them.]]. Nobody is 'due'. The numbers steady only because you're averaging over more drivers."
         }
       },
-      "hint": "Compare how much the bars jump at 6 trials versus 6,000. What's actually shrinking?"
+      "hint": "Remember how much your bankroll jumped at 10 drivers versus 5,000. What's actually shrinking — the risk per driver, or the wobble in the average?"
     },
     {
-      "id": "q-six-rolls",
+      "id": "q-margin-meaning",
       "type": "question",
-      "prompt": "So back to the prediction: in just 6 rolls, how many sixes should you expect?",
+      "prompt": "Your margin is **+$200 per driver on average**. With just 10 drivers, what does that *guarantee* for next year?",
       "format": "multiple_choice",
       "options": [
-        { "id": "a", "label": "Exactly 1, every time" },
-        { "id": "b", "label": "Often 0, 1, or 2 — small samples vary a lot" }
+        { "id": "a", "label": "A profit of about $2,000 — 10 drivers × $200 each." },
+        { "id": "b", "label": "Nothing certain — it's a long-run average, and one crash can still post a loss." }
       ],
       "answer": { "correctOptionId": "b" },
       "feedback": {
-        "correct": "Exactly. 'On average 1' does not mean 'exactly 1 each time.' Small samples swing wildly — that's why six rolls tell you almost nothing.",
-        "incorrect": "Run the sampler again at a tiny number of trials. You'll see 0 sixes one time and 3 the next. The 1-in-6 only shows up in the long run.",
+        "correct": "Exactly. '+$200 on average' is the long-run trend, not a promise. With 10 drivers a single $12,000 payout dwarfs $8,000 of premiums — a losing year, even on a winning margin.",
+        "incorrect": "That's the *average*, not a guarantee. One crash is a $12,000 hit against $8,000 of premiums — a loss that year. The +$200 only reliably shows up across thousands of drivers.",
         "byOption": {
-          "a": "If it were always exactly 1, there'd be no randomness at all. The expected value is 1, but any single batch of 6 scatters around it."
+          "a": "That's the *expected* profit, but a single $12,000 crash against 10 premiums ($8,000) is a losing year. The average only becomes reliable at scale."
         }
       },
-      "hint": "Expected value (1 six) is the long-run average, not a guarantee for one short batch."
+      "hint": "Expected value is a long-run average. How many $800 premiums does one $12,000 payout eat up?"
     },
     {
       "id": "summary",
       "type": "concept",
       "title": "The long run, in one line",
-      "body": "A probability is what a frequency settles to over many, many trials — an idea called the [[law of large numbers|The more times you repeat a random experiment, the closer the average result lands to the true probability. Small samples wander a lot; large ones barely budge.]].\n\nThat's why your single car is a mystery to an insurer but two million cars are a near-certainty. It's the same reason a casino can't predict one spin yet banks on the month.\n\nNext up: what happens when you start combining chances together."
+      "body": "A probability is a [[long-run relative frequency|The fraction of times an outcome happens if you repeat the situation a *huge* number of times. That settled fraction is exactly what we call its probability.]] — what the crash rate settles to over many, many drivers.\n\nYour $200 [[expected value|The long-run average result per driver: premium minus the average claim, here $800 − $600 = $200. It's what you earn *on average*, never a promise for one driver or one year.]] margin per driver is real — but it only *rescues you* once you have enough drivers for the average to show up. That's the [[law of large numbers|The more drivers (or trials) you average over, the closer the result lands to the true probability. Small books of business swing wildly; large ones barely budge.]].\n\nIt's the same math a casino runs: it can't predict one spin, but it banks on the month. Next, you'll start combining chances together."
     }
   ]
 }

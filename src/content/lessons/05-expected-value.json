@@ -1,76 +1,87 @@
 {
   "id": "expected-value",
   "order": 5,
-  "title": "Expected Value & Why the House Wins",
-  "subtitle": "The quiet number behind every casino",
-  "realWorldHook": "A roulette bet pays 35-to-1 and feels like a jackpot waiting to happen. Over time it bleeds you at a steady, mathematically guaranteed rate.",
-  "conceptSummary": "Expected value = Σ(outcome × probability). A negative-EV game can feel winnable and still drain you.",
+  "title": "The Casino Floor",
+  "subtitle": "Expected value and why the house always wins",
+  "realWorldHook": "A roulette bet pays 35-to-1 and feels like a jackpot waiting to happen — but the number only lands 1 spin in 38, so over time it drains you at a steady, guaranteed rate.",
+  "conceptSummary": "Expected value = Σ(outcome × probability). Variance can pump you up early, but a negative EV makes the long-run slide inevitable — the same engine the house and the insurer both run.",
   "estimatedMinutes": 5,
+  "scenario": {
+    "role": "You walk onto a casino floor with $100.",
+    "initialState": {
+      "startingBankroll": 100,
+      "wager": 5,
+      "payout": 35,
+      "winProbability": 0.02631578947,
+      "playsRun": 0,
+      "isHouse": false
+    }
+  },
   "steps": [
     {
-      "id": "hook",
+      "id": "concept-intro",
       "type": "concept",
-      "title": "The jackpot that isn't",
-      "body": "A roulette bet on a single number pays [[35-to-1|If you win, you collect 35 dollars for every 1 you bet. It sounds huge — but the number only lands about 1 spin in 38, less often than the payout makes it feel.]] and feels like a jackpot waiting to happen.\n\nBut over time it bleeds you at a steady, mathematically guaranteed rate. Casinos, lotteries, and insurers all run on the same quiet number: [[expected value|The average result per play if you repeated the bet forever, each outcome weighted by its chance. A *negative* expected value means a slow, guaranteed drain over time.]].\n\nLearn to compute it and you can see the leak in any bet."
+      "title": "The jackpot that's waiting to happen",
+      "body": "$100 in chips. The roulette bet on a single number pays [[35-to-1|Win and you collect $35 for every $1 you bet. It feels enormous — but the number only lands about 1 spin in 38, far less often than that payout makes it feel.]] — it *feels* like a jackpot waiting to happen.\n\nIn a moment you'll sit down at the wheel, take your $100 for a spin, and watch where the chips really go."
     },
     {
-      "id": "concept-ev",
-      "type": "concept",
-      "title": "What expected value is",
-      "body": "Expected value (EV) is the average outcome per play, weighting each result by its probability:\n\n**EV = Σ (outcome × probability)**\n\nBet $1 on a single roulette number. You win $35 with probability 1/38 and lose $1 with probability 37/38. EV ≈ −$0.05 per dollar. Every spin, on average, hands the house its [[house edge|The small average loss baked into every bet — here about 5 cents per dollar. It's how a casino profits with near-certainty even though any single spin is unpredictable.]]."
-    },
-    {
-      "id": "predict-trajectory",
+      "id": "predict-updown",
       "type": "predict",
-      "prompt": "You start with $100 and make this negative-EV bet 100 times. Where do you end up?",
+      "prompt": "After 100 spins of a 35-to-1 bet, are you up or down?",
       "format": "multiple_choice",
       "options": [
-        { "id": "a", "label": "Up — big payouts will hit" },
-        { "id": "b", "label": "Could be up or down short-term, but trending down" },
-        { "id": "c", "label": "Exactly back to $100" }
+        { "id": "up", "label": "Up — a big 35-to-1 payout will hit" },
+        { "id": "down", "label": "Down — the bet bleeds me over time" },
+        { "id": "even", "label": "Right back at $100" }
       ],
-      "revealMessage": "Let's play it out and watch the bankroll trajectory.",
+      "revealMessage": "Lock it in, then play it out on the floor.",
       "revealByOption": {
-        "a": "It can happen short-term — variance is real and a big payout might land. But the long-run pull is downward. Let's watch the two fight it out.",
-        "b": "That's exactly the right mental model — variance up close, a downward trend over time. Let's watch it play out.",
-        "c": "It almost never lands exactly even — and the drift is downward, not flat. Let's play and see."
+        "up": "Tempting — and short-term it can happen, because a 35-to-1 hit is a real jackpot when it lands. But the long-run pull is downward. Let's watch variance and the trend fight it out.",
+        "down": "That's the right instinct. A jackpot might land, but the average per spin is negative, so the longer you play the more certainly you slide. Let's see it.",
+        "even": "It almost never lands exactly even — and the drift is downward, not flat. Play it out and watch."
       }
     },
     {
-      "id": "explore-betting",
+      "id": "play-the-floor",
       "type": "interactive",
-      "prompt": "Run 300 gamblers at once. Their bankrolls fan out — a lucky few spike, most bleed — while the bold average line tracks the true EV trend and the histogram below shows where everyone actually ends up. Slide the payout to a fair wheel and watch the crowd recenter on $100.",
+      "prompt": "Hit **Spin** a few times to ride the variance — a 35-to-1 win flashes green and grows your stack. Then **Fast-forward 1,000 spins** and watch the slide. Finally tap **Be the house** and run the exact same wheel from the other side: the same math that drained you becomes steady profit.",
       "widget": {
-        "type": "evBettingGame",
-        "props": { "startingBankroll": 100, "payout": 35, "winProbability": 0.0263, "players": 300 }
-      }
-    },
-    {
-      "id": "q-variance",
-      "type": "question",
-      "prompt": "A handful of the 300 gamblers finished ahead, but the average line slid steadily below $100. What does that tell you?",
-      "format": "multiple_choice",
-      "options": [
-        { "id": "a", "label": "Variance can put you ahead short-term, but negative EV wins out over time" },
-        { "id": "b", "label": "The game is actually fair" },
-        { "id": "c", "label": "You'll win if you just keep playing longer" }
-      ],
-      "answer": { "correctOptionId": "a" },
-      "feedback": {
-        "correct": "Exactly. Being up early is variance — noise. The EV is negative, so the more you play, the more certainly you trend down. The house doesn't need every round, just the average.",
-        "incorrect": "Look at the EV line versus your bankroll. The bankroll wiggles around, but the trend follows the negative EV downward.",
-        "byOption": {
-          "b": "It isn't fair — a fair game has EV = 0. Here EV is negative, which is precisely why it drifts down.",
-          "c": "Playing longer makes it *worse*, not better — more plays means the average converges to the negative EV. That's the casino's edge."
+        "type": "casinoFloor",
+        "props": {
+          "startingBankroll": 100,
+          "wager": 5,
+          "payout": 35,
+          "winProbability": 0.02631578947
         }
       },
-      "hint": "Short-term swings are variance; the long-term direction is set by the sign of the EV."
+      "completion": { "type": "reaches", "param": "playsRun", "value": 1000 }
     },
     {
-      "id": "summary",
+      "id": "q-what-changed",
+      "type": "question",
+      "prompt": "You were *up* after 30 spins but *down* after 1,000. What changed?",
+      "format": "multiple_choice",
+      "options": [
+        { "id": "nothing", "label": "Nothing changed — variance let you win early, but negative EV makes the long-run trend inevitable" },
+        { "id": "cold", "label": "The wheel went cold — your luck ran out partway through" },
+        { "id": "longer", "label": "You should have stopped sooner; playing longer is what broke even games" }
+      ],
+      "answer": { "correctOptionId": "nothing" },
+      "feedback": {
+        "correct": "Exactly. A negative-EV game can feel winnable for a while — that's the trap. Being up early is [[variance|How far individual results swing around the average. High variance is exactly why you can be ahead early in a losing game — but it washes out as the plays pile up.]], not skill. Flip to the house's side and the same math that drained you becomes their steady income. Same long-run engine as the insurer in Lesson 1.",
+        "incorrect": "Nothing about the wheel changed — every spin had the same negative [[expected value|The average result per play if you repeated the bet forever, each outcome weighted by its chance. Here it's about −$0.26 per $5 spin: a slow, guaranteed drain.]]. Early on, variance happened to favor you; over 1,000 spins the average won out.",
+        "byOption": {
+          "cold": "There's no such thing as the wheel running cold — every spin is independent with the same odds. You weren't *hot* early either; that was variance. The negative EV was there the whole time.",
+          "longer": "Playing longer makes a negative-EV game *worse*, not better — more spins pull your result toward the negative average. That's precisely the house's edge."
+        }
+      },
+      "hint": "Did the odds of any single spin ever change? Think about variance up close versus the EV trend over the long run."
+    },
+    {
+      "id": "concept-close",
       "type": "concept",
-      "title": "Find the leak",
-      "body": "You might be up right now — [[variance|How much individual results swing around the average. High variance is why you can be ahead short-term even in a losing game — but it washes out over many plays.]] does that. But when EV is negative, the more you play, the more certainly you trend down.\n\nThe house doesn't need to win every round; it needs the average. Compute the EV of any bet, contract, or gamble and you can see the leak before you step in.\n\nThat's the long run — the thread running through all five lessons."
+      "title": "Same engine, two sides",
+      "body": "You felt both sides of one number. For you, EV per spin was negative — a slow, certain leak. For the house, the identical math runs with the sign flipped: your loss is its [[expected value|The long-run average per play. The house's is positive by exactly as much as yours is negative — that small edge, repeated millions of times, is guaranteed profit.]], collected with near-certainty.\n\nThe house doesn't win every round. It wins the *average*. That's the same long-run engine as Lesson 1's insurer — one sells hope, the other sells safety, and both let the math do the rest."
     }
   ]
 }
