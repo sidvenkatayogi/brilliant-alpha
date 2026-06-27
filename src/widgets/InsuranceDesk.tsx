@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import type { WidgetProps } from './registry'
-import { StickyVisual } from './shared/StickyVisual'
 
 // L1 — THE INSURANCE DESK. The learner runs a small-town car-insurance company.
 // The thing they manipulate IS the business: how many drivers they sign up.
@@ -259,7 +258,7 @@ export function InsuranceDesk({
   const [customers, setCustomers] = useState(() => seedNum('customers', 10))
   const [bankroll, setBankroll] = useState(() => seedNum('bankroll', 5000))
   const [yearsRun, setYearsRun] = useState(() => seedNum('yearsRun', 0))
-  const [history, setHistory] = useState<YearResult[]>([])
+  const [, setHistory] = useState<YearResult[]>([])
 
   // The bankroll the desk opened with. Captured once so Reset always returns
   // here even after we've published a live bankroll back to the shared scenario
@@ -275,8 +274,6 @@ export function InsuranceDesk({
   const rafRef = useRef<number>()
   const townRafRef = useRef<number>()
 
-  const lastYear = history[history.length - 1]
-  const realizedMargin = lastYear ? lastYear.net / customers : null
   const broke = bankroll < 0
 
   // Completion gate: the renderer watches this to enable Continue once the
@@ -477,73 +474,45 @@ export function InsuranceDesk({
   }, [run20Summary, revealYears, expectedMargin])
 
   return (
-    <div data-testid="insurance-desk" className="space-y-4">
-      <StickyVisual>
-        <div className="space-y-4">
-          {/* The living town — every insured driver gets a house, drawn on canvas
-              and shrunk as the book of business grows so the scale is felt. */}
-          <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
-            <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-              <span>Your town</span>
-              <span className="tabular-nums">
-                {customers.toLocaleString()} {customers === 1 ? 'driver' : 'drivers'} insured
-              </span>
-            </div>
-            <canvas
-              ref={townRef}
-              className="h-48 w-full rounded-xl bg-white ring-1 ring-slate-100"
-              aria-label={`A town of ${customers.toLocaleString()} insured drivers`}
-            />
+    <div data-testid="insurance-desk" className="flex h-full min-h-0 flex-col gap-2">
+      {/* The living town — flex-1 so it fills available space */}
+      <div className="min-h-0 flex-1 rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-100">
+        <div className="flex h-full flex-col">
+          <div className="mb-1 shrink-0 flex items-center justify-between text-xs text-slate-500">
+            <span>Your town</span>
+            <span className="tabular-nums">
+              {customers.toLocaleString()} {customers === 1 ? 'driver' : 'drivers'} insured
+            </span>
           </div>
-
-          {/* Vault + ledger readouts. */}
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <Readout
-              label="Bankroll"
-              value={money(bankroll)}
-              testid="bankroll"
-              tone={broke ? 'bad' : bankroll >= startBankroll ? 'good' : undefined}
-            />
-            <Readout label="Break-even premium" value={money(breakEven)} testid="break-even" />
-            <Readout label="Years run" value={String(yearsRun)} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-center">
-            <Readout
-              label="This year, per driver"
-              value={realizedMargin === null ? '—' : signed(realizedMargin)}
-              sub={
-                realizedMargin === null
-                  ? `long-run avg ${signed(expectedMargin)}/driver`
-                  : `vs ${signed(expectedMargin)}/driver avg · ${lastYear?.crashes} crash${lastYear?.crashes === 1 ? '' : 'es'}`
-              }
-              tone={realizedMargin === null ? undefined : realizedMargin >= 0 ? 'good' : 'bad'}
-            />
-            <Readout
-              label="Charged premium"
-              value={money(premium)}
-              sub={`margin ${signed(expectedMargin)}/driver (avg)`}
-            />
-          </div>
+          <canvas
+            ref={townRef}
+            className="min-h-0 flex-1 w-full rounded-xl bg-white ring-1 ring-slate-100"
+            aria-label={`A town of ${customers.toLocaleString()} insured drivers`}
+          />
         </div>
-      </StickyVisual>
+      </div>
 
-      {/* After a 20-year fast-forward: the scale-free per-driver view plus a
-          spread summary that tightens as the book of business grows. */}
+      {/* Vault + ledger readouts — shrink-0 */}
+      <div className="shrink-0 grid grid-cols-3 gap-1.5 text-center">
+        <Readout
+          label="Bankroll"
+          value={money(bankroll)}
+          testid="bankroll"
+          tone={broke ? 'bad' : bankroll >= startBankroll ? 'good' : undefined}
+        />
+        <Readout label="Break-even" value={money(breakEven)} testid="break-even" />
+        <Readout label="Years run" value={String(yearsRun)} />
+      </div>
+
+      {/* After a 20-year fast-forward: compact shrink-0 block */}
       {run20Summary && (
-        <div className="space-y-2">
+        <div className="shrink-0 space-y-1">
           <canvas
             ref={canvasRef}
-            className="h-32 w-full rounded-2xl bg-white ring-1 ring-slate-100"
+            className="h-20 w-full rounded-xl bg-white ring-1 ring-slate-100"
             aria-label="Per-driver result over 20 simulated years"
           />
-          <p className="text-center text-xs text-slate-500">
-            20 years at {run20Summary.customers.toLocaleString()} drivers — each point is that
-            year's result <span className="font-medium text-ink">per driver</span>. It clings to the
-            green +{money(expectedMargin)} average as the business grows.
-          </p>
-
-          <div className="grid grid-cols-2 gap-2 text-center">
+          <div className="grid grid-cols-2 gap-1.5 text-center">
             <Readout
               label="Loss years"
               value={`${run20Summary.lossYears} of 20`}
@@ -557,16 +526,11 @@ export function InsuranceDesk({
               tone={run20Summary.best - run20Summary.worst <= 2 * expectedMargin ? 'good' : 'bad'}
             />
           </div>
-
-          <p className="rounded-xl bg-accent/5 px-3 py-2 text-center text-xs text-slate-600">
-            More drivers doesn't mean more crashes hurt you — it means each year's result hugs the
-            same average more tightly. That tight, boring line is a healthy insurer.
-          </p>
         </div>
       )}
 
       {interactive && (
-        <div className="space-y-3">
+        <div className="shrink-0 space-y-2">
           {/* Customers = the SCALE of the business — the core control. */}
           <div>
             <div className="flex items-center justify-between text-sm">
@@ -589,7 +553,7 @@ export function InsuranceDesk({
           </div>
 
           {/* Quick-set scales — also the fastest path to the completion gate. */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {[10, 100, 2000, 5000].map((n) => (
               <button
                 key={n}

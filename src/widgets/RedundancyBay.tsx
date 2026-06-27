@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { WidgetProps } from './registry'
-import { StickyVisual } from './shared/StickyVisual'
 
 // L2 — The Redundancy Bay. Two distinct experiences, picked by props.mode:
 //
@@ -151,7 +150,7 @@ function useFleetReveal() {
 export function RedundancyBay(props: WidgetProps) {
   const mode = props.props?.mode === 'sandbox' ? 'sandbox' : 'compare'
   return (
-    <div data-testid="redundancy-bay" className="space-y-4">
+    <div data-testid="redundancy-bay" className="flex h-full min-h-0 flex-col gap-3">
       {mode === 'sandbox' ? <SandboxMode {...props} /> : <CompareMode {...props} />}
     </div>
   )
@@ -201,33 +200,32 @@ function CompareMode({ interactive = true, onParamChange, setScenario }: WidgetP
 
   return (
     <>
-      <StickyVisual>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Panel
-              title="Triple backup"
-              accent={C.safe}
-              blurb={`${TRIPLE.systems} independent systems · each fails ${oneIn(TRIPLE.failureRate)}`}
-              catastrophe={tripleCatastrophe}
-              catastropheTestId="triple-catastrophe"
-              outcomes={tripleOutcomes}
-              flown={flown}
-              crashes={tripleCrashes}
-            />
-            <Panel
-              title="One tough system"
-              accent={C.indigo}
-              blurb={`${SINGLE.systems} system · fails ${oneIn(SINGLE.failureRate)}`}
-              catastrophe={singleCatastrophe}
-              catastropheTestId="single-catastrophe"
-              outcomes={singleOutcomes}
-              flown={flown}
-              crashes={singleCrashes}
-            />
-        </div>
-      </StickyVisual>
+      {/* Panel grid — flex-1 min-h-0, panels fill available height */}
+      <div className="min-h-0 flex-1 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Panel
+          title="Triple backup"
+          accent={C.safe}
+          blurb={`${TRIPLE.systems} independent systems · each fails ${oneIn(TRIPLE.failureRate)}`}
+          catastrophe={tripleCatastrophe}
+          catastropheTestId="triple-catastrophe"
+          outcomes={tripleOutcomes}
+          flown={flown}
+          crashes={tripleCrashes}
+        />
+        <Panel
+          title="One tough system"
+          accent={C.indigo}
+          blurb={`${SINGLE.systems} system · fails ${oneIn(SINGLE.failureRate)}`}
+          catastrophe={singleCatastrophe}
+          catastropheTestId="single-catastrophe"
+          outcomes={singleOutcomes}
+          flown={flown}
+          crashes={singleCrashes}
+        />
+      </div>
 
       {flownComplete && (
-        <p className="text-center text-sm text-slate-600" aria-live="polite">
+        <p className="shrink-0 text-center text-sm text-slate-600" aria-live="polite">
           Same {FLEET.toLocaleString()} flights, two designs:{' '}
           <span className="font-semibold text-emerald-600">{tripleCrashes}</span> crashed with the
           triple backup vs{' '}
@@ -241,7 +239,7 @@ function CompareMode({ interactive = true, onParamChange, setScenario }: WidgetP
       )}
 
       {interactive && (
-        <button type="button" onClick={flyTheFleet} disabled={flying} className="btn-primary w-full">
+        <button type="button" onClick={flyTheFleet} disabled={flying} className="btn-primary w-full shrink-0">
           {flying
             ? `Flying… ${flown.toLocaleString()} / ${FLEET.toLocaleString()}`
             : 'Fly the fleet'}
@@ -312,35 +310,34 @@ function SandboxMode({ props, interactive = true, onParamChange, setScenario }: 
 
   return (
     <>
-      <StickyVisual>
-        <div className={`grid grid-cols-1 gap-3 ${compare ? 'sm:grid-cols-2' : ''}`}>
+      {/* Panel grid — flex-1 min-h-0 */}
+      <div className={`min-h-0 flex-1 grid grid-cols-1 gap-3 ${compare ? 'sm:grid-cols-2' : ''}`}>
+        <Panel
+          title="Your design"
+          accent={C.indigo}
+          blurb={`${systems} ${systems === 1 ? 'system' : 'systems'} · each fails ${oneIn(rate)}`}
+          catastrophe={catastrophe}
+          catastropheTestId="catastrophe-prob"
+          outcomes={expOutcomes}
+          flown={flown}
+          crashes={expCrashes}
+        />
+        {compare && (
           <Panel
-            title="Your design"
-            accent={C.indigo}
-            blurb={`${systems} ${systems === 1 ? 'system' : 'systems'} · each fails ${oneIn(rate)}`}
-            catastrophe={catastrophe}
-            catastropheTestId="catastrophe-prob"
-            outcomes={expOutcomes}
+            title="One tough system"
+            accent={C.safe}
+            blurb={`${SINGLE.systems} system · fails ${oneIn(SINGLE.failureRate)}`}
+            catastrophe={refCatastrophe}
+            catastropheTestId="ref-catastrophe"
+            outcomes={refOutcomes}
             flown={flown}
-            crashes={expCrashes}
+            crashes={refCrashes}
           />
-          {compare && (
-            <Panel
-              title="One tough system"
-              accent={C.safe}
-              blurb={`${SINGLE.systems} system · fails ${oneIn(SINGLE.failureRate)}`}
-              catastrophe={refCatastrophe}
-              catastropheTestId="ref-catastrophe"
-              outcomes={refOutcomes}
-              flown={flown}
-              crashes={refCrashes}
-            />
-          )}
-        </div>
-      </StickyVisual>
+        )}
+      </div>
 
       {interactive && (
-        <div className="space-y-3 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
+        <div className="shrink-0 space-y-3 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
           {/* Number of independent systems. */}
           <div>
             <div className="flex items-center justify-between text-sm">
@@ -440,16 +437,18 @@ function Panel({
   crashes: number
 }) {
   return (
-    <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
-      <div className="flex items-baseline justify-between gap-2">
+    <div className="flex min-h-0 flex-col rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
+      <div className="shrink-0 flex items-baseline justify-between gap-2">
         <h3 className="text-sm font-semibold text-ink">{title}</h3>
         <span className="text-2xl font-bold tabular-nums text-rose-600">{crashes}</span>
       </div>
-      <p className="mt-0.5 text-xs text-slate-500">{blurb}</p>
+      <p className="shrink-0 mt-0.5 text-xs text-slate-500">{blurb}</p>
 
-      <FleetGrid outcomes={outcomes} flown={flown} accent={accent} />
+      <div className="min-h-0 flex-1">
+        <FleetGrid outcomes={outcomes} flown={flown} accent={accent} />
+      </div>
 
-      <dl className="mt-2 text-xs">
+      <dl className="shrink-0 mt-2 text-xs">
         <div className="flex items-center justify-between">
           <dt className="text-slate-500">P(all systems fail) — crash</dt>
           <dd className="font-semibold text-rose-600" data-testid={catastropheTestId}>
@@ -539,7 +538,7 @@ function FleetGrid({
   return (
     <canvas
       ref={ref}
-      className="mt-2 h-40 w-full rounded-xl ring-1 ring-slate-200 sm:h-72"
+      className="h-full w-full rounded-xl ring-1 ring-slate-200"
       aria-label="A fleet of flights as a grid; green landed safely, amber diverted to maintenance, red crashed"
     />
   )

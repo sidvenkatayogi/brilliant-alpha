@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { WidgetProps } from './registry'
-import { StickyVisual } from './shared/StickyVisual'
 
 // L5 — THE CASINO FLOOR. You walk on with $100 and bet a single number on an
 // American roulette wheel: 35-to-1, but it only lands 1 spin in 38. A single
@@ -278,82 +277,74 @@ export function CasinoFloor({
   const busted = !isHouse && bankroll < wager
 
   return (
-    <div data-testid="casino-floor" className="space-y-4">
-      <StickyVisual>
-        <div className="space-y-4">
-          {/* The stage: roulette wheel front and center, with the chip stack that IS
-              the bankroll arranged beneath it. */}
-          <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-2xl bg-white p-6 ring-1 ring-slate-100">
-            <Wheel rotation={rotation} spinning={spinning} reduced={!!reduced} />
+    <div data-testid="casino-floor" className="flex h-full min-h-0 flex-col gap-3">
+      {/* Stage — shrink-0. Reduced padding on mobile to save height. */}
+      <div className="relative shrink-0 flex flex-col items-center gap-3 overflow-hidden rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-100">
+        <Wheel rotation={rotation} spinning={spinning} reduced={!!reduced} />
 
-            <div className="flex flex-col items-center gap-3">
-              <div className="text-center">
-                <p className="text-xs uppercase tracking-wide text-slate-400">
-                  {isHouse ? 'The vault' : 'Your bankroll'}
-                </p>
-                <motion.p
-                  key={Math.round(bankroll)}
-                  initial={reduced ? false : { scale: flash ? 1.18 : 1 }}
-                  animate={{ scale: 1 }}
-                  data-testid="bankroll"
-                  className={`text-4xl font-extrabold tabular-nums ${
-                    flash === 'win' ? 'text-emerald-600' : flash === 'loss' ? 'text-rose-600' : 'text-ink'
-                  }`}
-                >
-                  ${Math.round(bankroll)}
-                </motion.p>
-              </div>
-
-              {/* Chip stack — grows on a win, shrinks on a loss. */}
-              <div className="flex h-12 flex-wrap content-start items-end justify-center gap-0.5">
-                {chips.map((_, i) => (
-                  <span
-                    key={i}
-                    className={`h-2.5 w-7 rounded-full ${
-                      isHouse ? 'bg-emerald-500/80' : 'bg-amber-400/90'
-                    } ring-1 ring-amber-700/20`}
-                  />
-                ))}
-                {chipCount === 0 && <span className="text-xs font-semibold text-rose-500">busted</span>}
-              </div>
-            </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="text-center">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+              {isHouse ? 'The vault' : 'Your bankroll'}
+            </p>
+            <motion.p
+              key={Math.round(bankroll)}
+              initial={reduced ? false : { scale: flash ? 1.18 : 1 }}
+              animate={{ scale: 1 }}
+              data-testid="bankroll"
+              className={`text-3xl font-extrabold tabular-nums ${
+                flash === 'win' ? 'text-emerald-600' : flash === 'loss' ? 'text-rose-600' : 'text-ink'
+              }`}
+            >
+              ${Math.round(bankroll)}
+            </motion.p>
           </div>
 
-          {/* Live numbers: EV per play sits beside the bankroll. */}
-          <div className="grid grid-cols-2 gap-2 text-center">
-            <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
-              <p className="text-xs text-slate-500">EV per play</p>
-              <p
-                data-testid="ev-per-play"
-                className={`text-base font-bold tabular-nums ${
-                  evPerPlay < 0 ? 'text-rose-600' : 'text-emerald-600'
-                }`}
-              >
-                {fmtSigned(evPerPlay)}
-              </p>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
-              <p className="text-xs text-slate-500">Spins played</p>
-              <p data-testid="plays-run" className="text-base font-bold tabular-nums text-ink">
-                {playsRun}
-              </p>
-            </div>
+          {/* Chip stack — grows on a win, shrinks on a loss. */}
+          <div className="flex h-8 flex-wrap content-start items-end justify-center gap-0.5">
+            {chips.map((_, i) => (
+              <span
+                key={i}
+                className={`h-2.5 w-7 rounded-full ${
+                  isHouse ? 'bg-emerald-500/80' : 'bg-amber-400/90'
+                } ring-1 ring-amber-700/20`}
+              />
+            ))}
+            {chipCount === 0 && <span className="text-xs font-semibold text-rose-500">busted</span>}
           </div>
         </div>
-      </StickyVisual>
+      </div>
 
-      {/* Trajectory canvas lives outside the sticky region — it is a secondary
-          readout (historical path) that does not need to stay in frame while
-          the learner sets the wager or hits Spin. Keeping it here avoids the
-          sticky block becoming taller than the viewport on small screens. */}
-      <canvas
-        ref={canvasRef}
-        className="h-28 w-full rounded-2xl bg-slate-50 ring-1 ring-slate-100"
-        aria-label="Bankroll trajectory over the spins played"
-      />
+      {/* EV/spins + trajectory canvas — flex-1 min-h-0, canvas fills remaining space */}
+      <div className="min-h-0 flex-1 flex flex-col gap-2">
+        <div className="shrink-0 grid grid-cols-2 gap-2 text-center">
+          <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
+            <p className="text-xs text-slate-500">EV per play</p>
+            <p
+              data-testid="ev-per-play"
+              className={`text-base font-bold tabular-nums ${
+                evPerPlay < 0 ? 'text-rose-600' : 'text-emerald-600'
+              }`}
+            >
+              {fmtSigned(evPerPlay)}
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
+            <p className="text-xs text-slate-500">Spins played</p>
+            <p data-testid="plays-run" className="text-base font-bold tabular-nums text-ink">
+              {playsRun}
+            </p>
+          </div>
+        </div>
+        <canvas
+          ref={canvasRef}
+          className="min-h-0 flex-1 w-full rounded-2xl bg-slate-50 ring-1 ring-slate-100"
+          aria-label="Bankroll trajectory over the spins played"
+        />
+      </div>
 
       {interactive && (
-        <div className="space-y-3">
+        <div className="shrink-0 space-y-2">
           <div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-600">Wager per spin</span>
@@ -395,7 +386,7 @@ export function CasinoFloor({
 
           {busted && (
             <p className="text-center text-xs font-semibold text-rose-500">
-              Out of chips — hit “Reset bankroll” to play again.
+              Out of chips — hit "Reset bankroll" to play again.
             </p>
           )}
 

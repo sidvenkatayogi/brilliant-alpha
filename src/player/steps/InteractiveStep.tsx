@@ -25,14 +25,21 @@ export function InteractiveStep({ step, onAdvance }: Props) {
   )
 
   return (
-    <div className="space-y-5">
+    // Height-filling flex column so the widget expands to fill the viewport
+    // budget (h-dvh − header) without page scroll during interaction.
+    // prompt: shrink-0 with line-clamp guard on very small heights
+    // widget: flex-1 min-h-0 — the widget fills remaining space
+    // button: shrink-0 — always visible at the bottom
+    <div className="flex h-full min-h-0 flex-col gap-3">
       <MarkdownText
         text={step.prompt}
-        className="text-[15px] font-semibold leading-relaxed text-ink"
+        className="line-clamp-3 shrink-0 text-[15px] font-semibold leading-relaxed text-ink"
       />
-      <WidgetHost spec={step.widget} interactive onParamChange={handleParamChange} />
+      <div className="min-h-0 flex-1">
+        <WidgetHost spec={step.widget} interactive onParamChange={handleParamChange} />
+      </div>
       <button
-        className="btn-primary w-full"
+        className="btn-primary w-full shrink-0"
         disabled={!satisfied}
         onClick={onAdvance}
         type="button"

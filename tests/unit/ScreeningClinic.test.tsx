@@ -6,9 +6,10 @@ import { ScreeningClinic } from '../../src/widgets/ScreeningClinic'
 // canvas (jsdom has no real 2d context). A rare disease makes a positive almost
 // always false; a common one makes it almost always real.
 //
-// Co-visibility regression: in interactive mode, the reflective visual (PPV
-// readout + canvas wrapper) must be inside a sticky container so it stays in
-// frame while the learner scrolls to the controls.
+// Fit-layout regression: in interactive mode, the widget uses a height-filling
+// flex-column layout so the visual, sliders, and Continue button all fit within
+// the viewport without page scroll. The outer element carries a fit-layout class
+// (h-full flex flex-col) so the parent InteractiveStep can size it.
 
 describe('ScreeningClinic', () => {
   it('shows a low PPV for a rare disease despite an accurate test', () => {
@@ -46,34 +47,30 @@ describe('ScreeningClinic', () => {
     expect(screen.getByTestId('ppv')).toBeInTheDocument()
   })
 
-  // Co-visibility regression: the PPV readout (reflective visual) must be
-  // inside a sticky wrapper so it stays in frame as the learner scrolls to the
-  // sliders beneath it. Asserts the [data-sticky-visual] attribute is present
-  // on an ancestor of the PPV element.
-  it('wraps the reflective visual in a sticky container in interactive mode', () => {
+  // Fit-layout regression (replaces the sticky-wrapper test):
+  // In interactive mode the widget must use the fit-layout: the outer element
+  // is a height-filling flex column (h-full flex flex-col) so InteractiveStep
+  // can constrain it to the viewport. The PPV readout and sliders are both
+  // rendered and are descendants of the same outer widget container.
+  it('uses fit-layout in interactive mode: ppv and sliders present in flex-column container', () => {
     render(
       <ScreeningClinic
         props={{ prevalence: 0.001, sensitivity: 0.99, falsePositive: 0.05 }}
         interactive
       />,
     )
-    const ppv = screen.getByTestId('ppv')
-    // Walk up the DOM to find the sticky wrapper with data-sticky-visual.
-    let el: HTMLElement | null = ppv
-    let foundSticky = false
-    while (el) {
-      if (el.hasAttribute('data-sticky-visual')) {
-        foundSticky = true
-        break
-      }
-      el = el.parentElement
-    }
-    expect(foundSticky).toBe(true)
+    const container = screen.getByTestId('screening-clinic')
+    // The container must carry the flex h-full class names for the fit layout.
+    expect(container.className).toContain('flex')
+    expect(container.className).toContain('h-full')
+    // Both the visual readout and the controls must be present.
+    expect(screen.getByTestId('ppv')).toBeInTheDocument()
+    expect(screen.getByTestId('slider-prevalence')).toBeInTheDocument()
+    expect(screen.getByTestId('slider-sensitivity')).toBeInTheDocument()
+    expect(screen.getByTestId('slider-false-positive')).toBeInTheDocument()
   })
 
-  // Edge: in non-interactive mode the visual is present but there is no sticky
-  // wrapper requirement (controls are absent so scroll separation cannot occur).
-  // The test simply confirms the PPV is still rendered and accessible.
+  // Edge: non-interactive mode — visual renders, no sliders, no fit-layout required.
   it('renders the PPV readout in non-interactive mode without crashing', () => {
     render(
       <ScreeningClinic
@@ -82,5 +79,6 @@ describe('ScreeningClinic', () => {
       />,
     )
     expect(screen.getByTestId('ppv')).toBeInTheDocument()
+    expect(screen.queryByTestId('slider-prevalence')).not.toBeInTheDocument()
   })
 })

@@ -162,9 +162,9 @@ export function SpamInbox({
     : { type: 'spring' as const, stiffness: 500, damping: 38, mass: 0.6 }
 
   return (
-    <div data-testid="spam-inbox" className="space-y-4">
+    <div data-testid="spam-inbox" className="flex h-full min-h-0 flex-col gap-3">
       {/* Live readout — P(spam) in the current view + the shrinking denominator. */}
-      <div className="rounded-2xl bg-accent/5 p-4 text-center ring-1 ring-accent/20">
+      <div className="shrink-0 rounded-2xl bg-accent/5 px-4 py-3 text-center ring-1 ring-accent/20">
         <p className="text-xs font-medium text-slate-500">
           {activeKeys.length === 0 ? 'P(spam) across all email' : `P(spam | ${conditionLabel})`}
         </p>
@@ -174,25 +174,22 @@ export function SpamInbox({
         >
           {pSpam}%
         </p>
-        <div className="mx-auto mt-2 h-3 max-w-xs overflow-hidden rounded-full bg-slate-200">
+        <div className="mx-auto mt-1 h-2 max-w-xs overflow-hidden rounded-full bg-slate-200">
           <motion.div
             className="h-full rounded-full bg-bad"
             animate={{ width: `${pSpam}%` }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 200, damping: 30 }}
           />
         </div>
-        <p className="mt-2 text-xs text-slate-500">
-          <b className="text-bad">{spamCount}</b> spam in a view of{' '}
-          <b className="text-ink" data-testid="denominator">
-            {denominator}
-          </b>{' '}
+        <p className="mt-1 text-xs text-slate-500">
+          <b className="text-bad">{spamCount}</b> spam in <b data-testid="denominator">{denominator}</b>{' '}
           {denominator === 1 ? 'email' : 'emails'}
         </p>
       </div>
 
       {/* Clue chips — large, touch-first toggles. Hidden in the static frame. */}
       {interactive && (
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="shrink-0 flex flex-wrap justify-center gap-2">
           {CLUES.map((c) => {
             const on = active[c.key]
             return (
@@ -217,8 +214,8 @@ export function SpamInbox({
 
       {/* The inbox: ~100 envelopes. Non-matching ones fade/slide out, survivors
           repack via Framer layout. Reduced motion → jump straight to the slice. */}
-      <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-100">
-        <motion.div layout={!reduced} className="flex flex-wrap content-start justify-center gap-1.5">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-2xl bg-white p-2 ring-1 ring-slate-100">
+        <motion.div layout={!reduced} className="flex h-full flex-wrap content-start justify-center gap-1 overflow-hidden">
           <AnimatePresence mode="popLayout" initial={false}>
             {visible.map((email) => (
               <motion.div
@@ -239,7 +236,7 @@ export function SpamInbox({
       </div>
 
       {/* Legend so the color-reveal reads at a glance. */}
-      <div className="flex items-center justify-center gap-5 text-xs text-slate-500">
+      <div className="shrink-0 flex items-center justify-center gap-5 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-3 w-4 rounded-sm bg-[#fecdd3] ring-1 ring-bad" /> spam
         </span>

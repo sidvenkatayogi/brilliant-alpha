@@ -1,23 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { WidgetProps } from './registry'
-import { StickyVisual } from './shared/StickyVisual'
 
-// L4 ⭐ — THE SCREENING CLINIC. 1,000 people take a test that's "99% accurate".
+// L4 - THE SCREENING CLINIC. 1,000 people take a test that's "99% accurate".
 // They settle into ONE tidy grid, sorted by test result: the few who are truly
 // sick AND flagged (true positives, rose) sit first, then the much larger pile
 // of healthy people the test false-flagged (false positives, amber), then
 // everyone who tested negative (slate). A live readout answers the worried
-// patient's question — "of everyone who tested positive, how many are actually
-// sick?" — and with a rare disease the rose is buried under the amber.
+// patient's question - "of everyone who tested positive, how many are actually
+// sick?" - and with a rare disease the rose is buried under the amber.
 
 const POP = 1000
 const COLS = 40
 const ROWS = 25 // COLS * ROWS === POP
-const ASPECT = ROWS / COLS // square cells → canvas height / width
+const ASPECT = ROWS / COLS // square cells -> canvas height / width
 
 // Literal colours for the canvas grid.
-const C_TRUE_POS = '#f43f5e' // sick AND flagged — the real ones (rose)
-const C_FALSE_POS = '#f59e0b' // healthy but flagged — the false alarms (amber)
+const C_TRUE_POS = '#f43f5e' // sick AND flagged - the real ones (rose)
+const C_FALSE_POS = '#f59e0b' // healthy but flagged - the false alarms (amber)
 const C_NEG = '#e2e8f0' // everyone who tested negative (slate)
 
 const prefersReducedMotion = () =>
@@ -112,7 +111,7 @@ export function ScreeningClinic({
   const drawRef = useRef<(appearT: number, revealT: number) => void>(() => {})
 
   // Draw the single grid at a given appear progress (0..1, dots flood/settle in
-  // sorted order) and reveal progress (0..1, true positives turn amber→rose).
+  // sorted order) and reveal progress (0..1, true positives turn amber->rose).
   // No-ops cleanly when there's no canvas/context (jsdom in tests).
   const drawScene = useCallback(
     (appearT: number, revealT: number) => {
@@ -122,7 +121,9 @@ export function ScreeningClinic({
       if (!ctx) return
       const cssW = canvas.clientWidth
       if (!cssW) return
-      const cssH = cssW * ASPECT
+      // In fit layout the canvas has an explicit container height; use it.
+      // Fall back to the aspect-ratio derivation when clientHeight is zero (jsdom).
+      const cssH = canvas.clientHeight > 0 ? canvas.clientHeight : cssW * ASPECT
 
       const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1
       if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
@@ -276,105 +277,72 @@ export function ScreeningClinic({
   )
 
   return (
-    <div data-testid="screening-clinic" className="space-y-3">
-      <StickyVisual>
-        <div className="space-y-3">
-          {/* Intentional header band framing the flow — not a stray chip. */}
-          <div className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold">
-            <span className="text-slate-600">1,000 people screened</span>
-            <span className="text-slate-400">sorted by test result →</span>
-          </div>
+    <div data-testid="screening-clinic" className="flex h-full min-h-0 flex-col gap-2">
+      {/* header band - shrink-0 */}
+      <div className="shrink-0 flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold">
+        <span className="text-slate-600">1,000 people screened</span>
+        <span className="text-slate-400">sorted by test result</span>
+      </div>
 
-          <canvas
-            ref={canvasRef}
-            className="w-full rounded-2xl bg-slate-50 ring-1 ring-slate-100"
-            style={{ height: 1 }}
-            aria-label="A grid of 1,000 people sorted by test result: true positives in rose, false positives in amber, negatives in slate"
-          />
+      {/* canvas area - flex-1 min-h-0, canvas fills it */}
+      <div className="relative min-h-0 flex-1">
+        <canvas
+          ref={canvasRef}
+          className="h-full w-full rounded-2xl bg-slate-50 ring-1 ring-slate-100"
+          aria-label="A grid of 1,000 people sorted by test result: true positives in rose, false positives in amber, negatives in slate"
+        />
+      </div>
 
-          {/* Inline legend so the colours read at a glance. */}
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-rose-500" /> real positive
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-500" /> false alarm
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-slate-200 ring-1 ring-slate-300" /> tested
-              negative
-            </span>
-          </div>
-
-          {/* The headline the worried patient is waiting on. */}
-          <div className="rounded-2xl bg-accent/10 p-4 text-center ring-1 ring-accent/30">
-            <p className="text-sm text-slate-600">Of everyone who tested positive…</p>
-            <p className="text-4xl font-extrabold text-ink" data-testid="ppv">
-              {pct}%
-            </p>
-            <p className="text-sm text-slate-600">actually have the disease</p>
-            <p className="mt-2 text-xs tabular-nums text-slate-500">
-              <span className="text-rose-500">●</span> {counts.tp} true positive
-              {counts.tp === 1 ? '' : 's'}
-              <span className="mx-1.5 text-slate-300">·</span>
-              <span className="text-amber-500">●</span> {counts.fp} false positive
-              {counts.fp === 1 ? '' : 's'}
-            </p>
-          </div>
-        </div>
-      </StickyVisual>
+      {/* PPV callout - shrink-0, compact version */}
+      <div className="shrink-0 rounded-2xl bg-accent/10 px-4 py-2 text-center ring-1 ring-accent/30">
+        <p className="text-xs text-slate-600">Of everyone who tested positive...</p>
+        <p className="text-3xl font-extrabold text-ink" data-testid="ppv">
+          {pct}%
+        </p>
+        <p className="text-xs text-slate-600">actually have the disease</p>
+        <p className="mt-1 text-xs tabular-nums text-slate-500">
+          <span className="text-rose-500">&#x25CF;</span> {counts.tp} true positive
+          {counts.tp === 1 ? '' : 's'}
+          <span className="mx-1.5 text-slate-300">&#xB7;</span>
+          <span className="text-amber-500">&#x25CF;</span> {counts.fp} false positive
+          {counts.fp === 1 ? '' : 's'}
+        </p>
+      </div>
 
       {interactive && (
-        <>
-          {/* One worried patient steps forward. */}
-          <div className="flex items-start gap-3 rounded-2xl bg-white p-3 ring-1 ring-slate-200">
-            <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-500">
-              <span className="text-lg leading-none">●</span>
-            </div>
-            <p className="text-sm text-ink">
-              <span className="font-semibold">A patient who tested positive asks:</span> “Am I going
-              to die?” — Honestly? A positive here means about a{' '}
-              <span className="font-bold text-accent">{pct}%</span> chance you’re actually sick.
-              {pct < 50 ? ' Far more likely it’s a false alarm.' : ''}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-xs text-slate-500">
-              Drag the sliders to set the scenario — the grid and the percentage update instantly.
-            </p>
-            <Slider
-              label="How rare is the disease?"
-              value={prevalence}
-              min={0.001}
-              max={0.5}
-              step={0.001}
-              display={`${(prevalence * 100).toFixed(1)}%`}
-              onChange={onSlider(setPrevalence)}
-              testid="prevalence"
-            />
-            <Slider
-              label="How good is the test at catching it?"
-              value={sensitivity}
-              min={0.5}
-              max={1}
-              step={0.01}
-              display={`${Math.round(sensitivity * 100)}%`}
-              onChange={onSlider(setSensitivity)}
-              testid="sensitivity"
-            />
-            <Slider
-              label="How often does it false-alarm?"
-              value={falsePositive}
-              min={0}
-              max={0.2}
-              step={0.005}
-              display={`${(falsePositive * 100).toFixed(1)}%`}
-              onChange={onSlider(setFalsePositive)}
-              testid="false-positive"
-            />
-          </div>
-        </>
+        <div className="shrink-0 space-y-2">
+          <p className="text-xs text-slate-500">Drag the sliders to set the scenario.</p>
+          <Slider
+            label="How rare is the disease?"
+            value={prevalence}
+            min={0.001}
+            max={0.5}
+            step={0.001}
+            display={`${(prevalence * 100).toFixed(1)}%`}
+            onChange={onSlider(setPrevalence)}
+            testid="prevalence"
+          />
+          <Slider
+            label="How good is the test at catching it?"
+            value={sensitivity}
+            min={0.5}
+            max={1}
+            step={0.01}
+            display={`${Math.round(sensitivity * 100)}%`}
+            onChange={onSlider(setSensitivity)}
+            testid="sensitivity"
+          />
+          <Slider
+            label="How often does it false-alarm?"
+            value={falsePositive}
+            min={0}
+            max={0.2}
+            step={0.005}
+            display={`${(falsePositive * 100).toFixed(1)}%`}
+            onChange={onSlider(setFalsePositive)}
+            testid="false-positive"
+          />
+        </div>
       )}
     </div>
   )

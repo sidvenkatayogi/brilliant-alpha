@@ -110,7 +110,7 @@ export function LessonPlayer({ lesson }: Props) {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pb-10">
+    <div className="mx-auto flex h-dvh max-w-xl flex-col px-4 pb-4">
       <header className="sticky top-0 z-10 -mx-4 bg-slate-50/90 px-4 py-3 backdrop-blur">
         <div className="flex items-center gap-2">
           <button
@@ -144,17 +144,17 @@ export function LessonPlayer({ lesson }: Props) {
         </div>
       </header>
 
-      <main className="flex-1 pt-6">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-accent">
+      <main className="flex min-h-0 flex-1 flex-col pt-6">
+        <p className="mb-1 shrink-0 text-xs font-semibold uppercase tracking-wide text-accent">
           {lesson.title}
         </p>
         <ScenarioProvider key={`${lesson.id}-${runId}`} initialState={lesson.scenario?.initialState}>
-          <div key={step.id} className="animate-[fadeIn_0.2s_ease]">
+          <div key={step.id} className="flex min-h-0 flex-1 flex-col animate-[fadeIn_0.2s_ease]">
             <StepRenderer step={step} onAnswered={handleAnswered} onAdvance={advance} />
           </div>
         </ScenarioProvider>
         {finishing && (
-          <p className="mt-4 text-center text-sm text-slate-400">Wrapping up…</p>
+          <p className="mt-4 shrink-0 text-center text-sm text-slate-400">Wrapping up…</p>
         )}
       </main>
     </div>
