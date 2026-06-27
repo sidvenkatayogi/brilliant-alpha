@@ -234,16 +234,26 @@ export function CasinoFloor({
 
     const shown = path.slice(0, Math.max(2, revealed))
     const pad = 10
-    let lo = Math.min(startingBankroll, ...shown)
-    let hi = Math.max(startingBankroll, ...shown)
-    if (hi - lo < 1) {
-      lo -= 1
-      hi += 1
-    }
-    const range = hi - lo
+    // Pin the floor at $0 and the top at the peak (never below the stake) with a
+    // little headroom. A FIXED frame means the line drains steadily toward the
+    // floor instead of rescaling the instant the bankroll hits 0 — that mid-run
+    // rescale is what made busting read as confusing.
+    const lo = 0
+    const hi = Math.max(startingBankroll, ...shown) * 1.08
+    const range = Math.max(1, hi - lo)
     const n = shown.length
     const xOf = (i: number) => pad + (i / Math.max(1, n - 1)) * (cssW - 2 * pad)
     const yOf = (v: number) => pad + (1 - (v - lo) / range) * (cssH - 2 * pad)
+
+    // Solid $0 floor at the bottom so "you went broke" reads as the line lying
+    // flat on the floor, not vanishing off the edge.
+    const floorY = yOf(0)
+    ctx.strokeStyle = '#e2e8f0'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(pad, floorY)
+    ctx.lineTo(cssW - pad, floorY)
+    ctx.stroke()
 
     // Break-even baseline at the starting stake.
     ctx.strokeStyle = '#cbd5e1'
@@ -259,6 +269,16 @@ export function CasinoFloor({
     const end = shown[shown.length - 1]
     const ahead = end >= startingBankroll
     const line = ahead ? '#10b981' : '#f43f5e'
+
+    // Soft fill under the line so the trajectory has body even in a short canvas.
+    ctx.beginPath()
+    shown.forEach((v, i) => (i === 0 ? ctx.moveTo(xOf(i), yOf(v)) : ctx.lineTo(xOf(i), yOf(v))))
+    ctx.lineTo(xOf(n - 1), floorY)
+    ctx.lineTo(xOf(0), floorY)
+    ctx.closePath()
+    ctx.fillStyle = ahead ? 'rgba(16,185,129,0.10)' : 'rgba(244,63,94,0.10)'
+    ctx.fill()
+
     ctx.strokeStyle = line
     ctx.lineWidth = 2
     ctx.beginPath()
@@ -270,6 +290,16 @@ export function CasinoFloor({
     ctx.beginPath()
     ctx.arc(xOf(n - 1), yOf(end), 3, 0, Math.PI * 2)
     ctx.fill()
+
+    // Mark the bust: when the bankroll is sitting on the floor, label it so the
+    // flatline-at-zero is unmistakable rather than just an empty bottom.
+    if (end <= 0) {
+      ctx.fillStyle = '#f43f5e'
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif'
+      ctx.textAlign = 'end'
+      ctx.textBaseline = 'bottom'
+      ctx.fillText('$0 — broke', cssW - pad, floorY - 3)
+    }
   }, [path, revealed, startingBankroll])
 
   const chipCount = Math.min(MAX_CHIPS, Math.max(0, Math.round(bankroll / CHIP_VALUE)))
@@ -277,12 +307,13 @@ export function CasinoFloor({
   const busted = !isHouse && bankroll < wager
 
   return (
-    <div data-testid="casino-floor" className="flex h-full min-h-0 flex-col gap-3">
-      {/* Stage — shrink-0. Reduced padding on mobile to save height. */}
-      <div className="relative shrink-0 flex flex-col items-center gap-3 overflow-hidden rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-100">
+    <div data-testid="casino-floor" className="flex h-full min-h-0 flex-col gap-2">
+      {/* Stage — shrink-0. Wheel sits BESIDE the bankroll (horizontal) to keep
+          this band short so the trajectory graph below has real height. */}
+      <div className="relative shrink-0 flex items-center justify-center gap-4 overflow-hidden rounded-2xl bg-white px-4 py-2 ring-1 ring-slate-100">
         <Wheel rotation={rotation} spinning={spinning} reduced={!!reduced} />
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
           <div className="text-center">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               {isHouse ? 'The vault' : 'Your bankroll'}
@@ -305,7 +336,7 @@ export function CasinoFloor({
             {chips.map((_, i) => (
               <span
                 key={i}
-                className={`h-2.5 w-7 rounded-full ${
+                className={`h-2.5 w-6 rounded-full ${
                   isHouse ? 'bg-emerald-500/80' : 'bg-amber-400/90'
                 } ring-1 ring-amber-700/20`}
               />
@@ -316,22 +347,22 @@ export function CasinoFloor({
       </div>
 
       {/* EV/spins + trajectory canvas — flex-1 min-h-0, canvas fills remaining space */}
-      <div className="min-h-0 flex-1 flex flex-col gap-2">
+      <div className="min-h-0 flex-1 flex flex-col gap-1.5">
         <div className="shrink-0 grid grid-cols-2 gap-2 text-center">
-          <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
+          <div className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 px-2 py-1 ring-1 ring-slate-100">
             <p className="text-xs text-slate-500">EV per play</p>
             <p
               data-testid="ev-per-play"
-              className={`text-base font-bold tabular-nums ${
+              className={`text-sm font-bold tabular-nums ${
                 evPerPlay < 0 ? 'text-rose-600' : 'text-emerald-600'
               }`}
             >
               {fmtSigned(evPerPlay)}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
-            <p className="text-xs text-slate-500">Spins played</p>
-            <p data-testid="plays-run" className="text-base font-bold tabular-nums text-ink">
+          <div className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 px-2 py-1 ring-1 ring-slate-100">
+            <p className="text-xs text-slate-500">Spins</p>
+            <p data-testid="plays-run" className="text-sm font-bold tabular-nums text-ink">
               {playsRun}
             </p>
           </div>
@@ -344,7 +375,7 @@ export function CasinoFloor({
       </div>
 
       {interactive && (
-        <div className="shrink-0 space-y-2">
+        <div className="shrink-0 space-y-1.5">
           <div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-600">Wager per spin</span>
@@ -390,29 +421,31 @@ export function CasinoFloor({
             </p>
           )}
 
-          <button
-            className={`w-full cursor-pointer rounded-full px-3 py-2 text-sm font-semibold transition-colors duration-200 ${
-              isHouse
-                ? 'bg-good/15 text-emerald-600 ring-1 ring-good/40'
-                : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'
-            }`}
-            onClick={toggleHouse}
-            type="button"
-            data-testid="house-toggle"
-            aria-pressed={isHouse}
-            disabled={spinning}
-          >
-            {isHouse ? 'You are the house ✓' : 'Be the house'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${
+                isHouse
+                  ? 'bg-good/15 text-emerald-600 ring-1 ring-good/40'
+                  : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'
+              }`}
+              onClick={toggleHouse}
+              type="button"
+              data-testid="house-toggle"
+              aria-pressed={isHouse}
+              disabled={spinning}
+            >
+              {isHouse ? 'You are the house ✓' : 'Be the house'}
+            </button>
 
-          <button
-            className="w-full cursor-pointer text-center text-xs text-slate-400 transition-colors duration-200 hover:text-ink"
-            onClick={reset}
-            type="button"
-            disabled={spinning}
-          >
-            Reset bankroll
-          </button>
+            <button
+              className="shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium text-slate-400 ring-1 ring-slate-200 transition-colors duration-200 hover:text-ink"
+              onClick={reset}
+              type="button"
+              disabled={spinning}
+            >
+              Reset
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -429,7 +462,7 @@ function Wheel({
   reduced: boolean
 }) {
   return (
-    <div className="relative h-40 w-40 shrink-0">
+    <div className="relative h-20 w-20 shrink-0">
       {/* Pointer */}
       <div className="absolute left-1/2 top-0 z-10 h-0 w-0 -translate-x-1/2 border-x-[7px] border-t-[12px] border-x-transparent border-t-amber-400" />
       <motion.div
