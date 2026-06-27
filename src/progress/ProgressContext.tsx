@@ -42,6 +42,25 @@ interface ProgressContextValue {
 
 const ProgressContext = createContext<ProgressContextValue | null>(null)
 
+// The set of lessons that actually exist. Completion is counted against this so
+// stale or unknown lesson ids in saved progress can never inflate the total.
+const knownLessonIds = new Set(allLessons.map((l) => l.id))
+
+/**
+ * The single source of truth for "lessons completed": derive it from the
+ * per-lesson progress map rather than tracking a separate counter. Because the
+ * map is keyed by lessonId, a lesson can be re-completed any number of times
+ * without ever being counted twice, and the result is capped at the number of
+ * real lessons — so "6/5" is structurally impossible.
+ */
+function countCompleted(progress: Record<string, LessonProgress>): number {
+  let n = 0
+  for (const p of Object.values(progress)) {
+    if (p.status === 'completed' && knownLessonIds.has(p.lessonId)) n++
+  }
+  return Math.min(n, knownLessonIds.size)
+}
+
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [userDoc, setUserDoc] = useState<UserDoc | null>(null)
@@ -74,8 +93,17 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       }
       const list = await fetchAllProgress(user.uid)
       if (cancelled) return
+      const progressMap = Object.fromEntries(list.map((p) => [p.lessonId, p]))
+      // Self-heal a drifted count: recompute the true value from per-lesson
+      // progress and correct the stored doc if an older imperative-increment
+      // path left it wrong (e.g. an impossible "6/5"). Idempotent on clean docs.
+      const trueCompleted = countCompleted(progressMap)
+      if (doc.totalLessonsCompleted !== trueCompleted) {
+        doc.totalLessonsCompleted = trueCompleted
+        void updateUserDoc(user.uid, { totalLessonsCompleted: trueCompleted })
+      }
       setUserDoc(doc)
-      setProgressByLesson(Object.fromEntries(list.map((p) => [p.lessonId, p])))
+      setProgressByLesson(progressMap)
       setLoading(false)
     })()
     return () => {
@@ -195,7 +223,6 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const completeLesson = useCallback(
     async (lesson: Lesson) => {
       const current = progressRef.current[lesson.id] ?? emptyProgress(lesson.id)
-      const wasCompleted = current.status === 'completed'
       const mastery = computeMastery(lesson, current)
 
       const completed: LessonProgress = {
@@ -205,7 +232,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         completedAt: current.completedAt ?? Date.now(),
         lastAccessedAt: Date.now(),
       }
-      setProgressByLesson((prev) => ({ ...prev, [lesson.id]: completed }))
+      const nextProgress = { ...progressRef.current, [lesson.id]: completed }
+      setProgressByLesson(nextProgress)
       if (user) void saveLessonProgress(user.uid, completed)
 
       // Update streak + milestones on the user doc. If the doc hasn't finished
@@ -227,7 +255,10 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           today,
         )
 
-        const totalCompleted = baseDoc.totalLessonsCompleted + (wasCompleted ? 0 : 1)
+        // Derived, not incremented: counting completed lessons from the live
+        // progress map is idempotent, so re-finishing a lesson (Skip to recap →
+        // advance, browser back, double-tap) can never overcount.
+        const totalCompleted = countCompleted(nextProgress)
         const milestones = new Set(baseDoc.milestones)
         if (totalCompleted >= 1 && !milestones.has('first_lesson')) {
           milestones.add('first_lesson')
