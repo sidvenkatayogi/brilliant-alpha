@@ -31,3 +31,9 @@ playwright.config.d.ts
 
 serviceAccount.json
 .vercel
+
+# Software factory run scratch
+.factory/
+.claude/
+software-factory.md
+CLAUDE.md

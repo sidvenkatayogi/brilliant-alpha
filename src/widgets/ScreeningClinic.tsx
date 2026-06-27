@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { WidgetProps } from './registry'
+import { StickyVisual } from './shared/StickyVisual'
 
 // L4 ⭐ — THE SCREENING CLINIC. 1,000 people take a test that's "99% accurate".
 // They settle into ONE tidy grid, sorted by test result: the few who are truly
@@ -276,48 +277,52 @@ export function ScreeningClinic({
 
   return (
     <div data-testid="screening-clinic" className="space-y-3">
-      {/* Intentional header band framing the flow — not a stray chip. */}
-      <div className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold">
-        <span className="text-slate-600">1,000 people screened</span>
-        <span className="text-slate-400">sorted by test result →</span>
-      </div>
+      <StickyVisual>
+        <div className="space-y-3">
+          {/* Intentional header band framing the flow — not a stray chip. */}
+          <div className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold">
+            <span className="text-slate-600">1,000 people screened</span>
+            <span className="text-slate-400">sorted by test result →</span>
+          </div>
 
-      <canvas
-        ref={canvasRef}
-        className="w-full rounded-2xl bg-slate-50 ring-1 ring-slate-100"
-        style={{ height: 1 }}
-        aria-label="A grid of 1,000 people sorted by test result: true positives in rose, false positives in amber, negatives in slate"
-      />
+          <canvas
+            ref={canvasRef}
+            className="w-full rounded-2xl bg-slate-50 ring-1 ring-slate-100"
+            style={{ height: 1 }}
+            aria-label="A grid of 1,000 people sorted by test result: true positives in rose, false positives in amber, negatives in slate"
+          />
 
-      {/* Inline legend so the colours read at a glance. */}
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-rose-500" /> real positive
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-500" /> false alarm
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-slate-200 ring-1 ring-slate-300" /> tested
-          negative
-        </span>
-      </div>
+          {/* Inline legend so the colours read at a glance. */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-500">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-rose-500" /> real positive
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-500" /> false alarm
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-slate-200 ring-1 ring-slate-300" /> tested
+              negative
+            </span>
+          </div>
 
-      {/* The headline the worried patient is waiting on. */}
-      <div className="rounded-2xl bg-accent/10 p-4 text-center ring-1 ring-accent/30">
-        <p className="text-sm text-slate-600">Of everyone who tested positive…</p>
-        <p className="text-4xl font-extrabold text-ink" data-testid="ppv">
-          {pct}%
-        </p>
-        <p className="text-sm text-slate-600">actually have the disease</p>
-        <p className="mt-2 text-xs tabular-nums text-slate-500">
-          <span className="text-rose-500">●</span> {counts.tp} true positive
-          {counts.tp === 1 ? '' : 's'}
-          <span className="mx-1.5 text-slate-300">·</span>
-          <span className="text-amber-500">●</span> {counts.fp} false positive
-          {counts.fp === 1 ? '' : 's'}
-        </p>
-      </div>
+          {/* The headline the worried patient is waiting on. */}
+          <div className="rounded-2xl bg-accent/10 p-4 text-center ring-1 ring-accent/30">
+            <p className="text-sm text-slate-600">Of everyone who tested positive…</p>
+            <p className="text-4xl font-extrabold text-ink" data-testid="ppv">
+              {pct}%
+            </p>
+            <p className="text-sm text-slate-600">actually have the disease</p>
+            <p className="mt-2 text-xs tabular-nums text-slate-500">
+              <span className="text-rose-500">●</span> {counts.tp} true positive
+              {counts.tp === 1 ? '' : 's'}
+              <span className="mx-1.5 text-slate-300">·</span>
+              <span className="text-amber-500">●</span> {counts.fp} false positive
+              {counts.fp === 1 ? '' : 's'}
+            </p>
+          </div>
+        </div>
+      </StickyVisual>
 
       {interactive && (
         <>

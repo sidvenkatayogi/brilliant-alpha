@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { WidgetProps } from './registry'
+import { StickyVisual } from './shared/StickyVisual'
 
 // L2 — The Redundancy Bay. Two distinct experiences, picked by props.mode:
 //
@@ -200,28 +201,30 @@ function CompareMode({ interactive = true, onParamChange, setScenario }: WidgetP
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Panel
-          title="Triple backup"
-          accent={C.safe}
-          blurb={`${TRIPLE.systems} independent systems · each fails ${oneIn(TRIPLE.failureRate)}`}
-          catastrophe={tripleCatastrophe}
-          catastropheTestId="triple-catastrophe"
-          outcomes={tripleOutcomes}
-          flown={flown}
-          crashes={tripleCrashes}
-        />
-        <Panel
-          title="One tough system"
-          accent={C.indigo}
-          blurb={`${SINGLE.systems} system · fails ${oneIn(SINGLE.failureRate)}`}
-          catastrophe={singleCatastrophe}
-          catastropheTestId="single-catastrophe"
-          outcomes={singleOutcomes}
-          flown={flown}
-          crashes={singleCrashes}
-        />
-      </div>
+      <StickyVisual>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Panel
+              title="Triple backup"
+              accent={C.safe}
+              blurb={`${TRIPLE.systems} independent systems · each fails ${oneIn(TRIPLE.failureRate)}`}
+              catastrophe={tripleCatastrophe}
+              catastropheTestId="triple-catastrophe"
+              outcomes={tripleOutcomes}
+              flown={flown}
+              crashes={tripleCrashes}
+            />
+            <Panel
+              title="One tough system"
+              accent={C.indigo}
+              blurb={`${SINGLE.systems} system · fails ${oneIn(SINGLE.failureRate)}`}
+              catastrophe={singleCatastrophe}
+              catastropheTestId="single-catastrophe"
+              outcomes={singleOutcomes}
+              flown={flown}
+              crashes={singleCrashes}
+            />
+        </div>
+      </StickyVisual>
 
       {flownComplete && (
         <p className="text-center text-sm text-slate-600" aria-live="polite">
@@ -309,30 +312,32 @@ function SandboxMode({ props, interactive = true, onParamChange, setScenario }: 
 
   return (
     <>
-      <div className={`grid grid-cols-1 gap-3 ${compare ? 'sm:grid-cols-2' : ''}`}>
-        <Panel
-          title="Your design"
-          accent={C.indigo}
-          blurb={`${systems} ${systems === 1 ? 'system' : 'systems'} · each fails ${oneIn(rate)}`}
-          catastrophe={catastrophe}
-          catastropheTestId="catastrophe-prob"
-          outcomes={expOutcomes}
-          flown={flown}
-          crashes={expCrashes}
-        />
-        {compare && (
+      <StickyVisual>
+        <div className={`grid grid-cols-1 gap-3 ${compare ? 'sm:grid-cols-2' : ''}`}>
           <Panel
-            title="One tough system"
-            accent={C.safe}
-            blurb={`${SINGLE.systems} system · fails ${oneIn(SINGLE.failureRate)}`}
-            catastrophe={refCatastrophe}
-            catastropheTestId="ref-catastrophe"
-            outcomes={refOutcomes}
+            title="Your design"
+            accent={C.indigo}
+            blurb={`${systems} ${systems === 1 ? 'system' : 'systems'} · each fails ${oneIn(rate)}`}
+            catastrophe={catastrophe}
+            catastropheTestId="catastrophe-prob"
+            outcomes={expOutcomes}
             flown={flown}
-            crashes={refCrashes}
+            crashes={expCrashes}
           />
-        )}
-      </div>
+          {compare && (
+            <Panel
+              title="One tough system"
+              accent={C.safe}
+              blurb={`${SINGLE.systems} system · fails ${oneIn(SINGLE.failureRate)}`}
+              catastrophe={refCatastrophe}
+              catastropheTestId="ref-catastrophe"
+              outcomes={refOutcomes}
+              flown={flown}
+              crashes={refCrashes}
+            />
+          )}
+        </div>
+      </StickyVisual>
 
       {interactive && (
         <div className="space-y-3 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
@@ -534,7 +539,7 @@ function FleetGrid({
   return (
     <canvas
       ref={ref}
-      className="mt-2 h-72 w-full rounded-xl ring-1 ring-slate-200"
+      className="mt-2 h-40 w-full rounded-xl ring-1 ring-slate-200 sm:h-72"
       aria-label="A fleet of flights as a grid; green landed safely, amber diverted to maintenance, red crashed"
     />
   )

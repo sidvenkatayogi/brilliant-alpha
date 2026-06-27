@@ -69,7 +69,7 @@ export default defineConfig(({ mode }) => {
       setupFiles: ['./src/test/setup.ts'],
       // Playwright specs (tests/e2e) and emulator-backed integration tests
       // (tests/integration) run via their own commands, not the default unit run.
-      exclude: ['**/node_modules/**', '**/tests/e2e/**', '**/tests/integration/**'],
+      exclude: ['**/node_modules/**', '**/tests/e2e/**', '**/tests/integration/**', '**/.factory/**'],
     },
   }
 })

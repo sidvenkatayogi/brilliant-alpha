@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { WidgetProps } from './registry'
+import { StickyVisual } from './shared/StickyVisual'
 
 // L1 — THE INSURANCE DESK. The learner runs a small-town car-insurance company.
 // The thing they manipulate IS the business: how many drivers they sign up.
@@ -477,51 +478,55 @@ export function InsuranceDesk({
 
   return (
     <div data-testid="insurance-desk" className="space-y-4">
-      {/* The living town — every insured driver gets a house, drawn on canvas
-          and shrunk as the book of business grows so the scale is felt. */}
-      <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
-        <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-          <span>Your town</span>
-          <span className="tabular-nums">
-            {customers.toLocaleString()} {customers === 1 ? 'driver' : 'drivers'} insured
-          </span>
+      <StickyVisual>
+        <div className="space-y-4">
+          {/* The living town — every insured driver gets a house, drawn on canvas
+              and shrunk as the book of business grows so the scale is felt. */}
+          <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
+            <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+              <span>Your town</span>
+              <span className="tabular-nums">
+                {customers.toLocaleString()} {customers === 1 ? 'driver' : 'drivers'} insured
+              </span>
+            </div>
+            <canvas
+              ref={townRef}
+              className="h-48 w-full rounded-xl bg-white ring-1 ring-slate-100"
+              aria-label={`A town of ${customers.toLocaleString()} insured drivers`}
+            />
+          </div>
+
+          {/* Vault + ledger readouts. */}
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <Readout
+              label="Bankroll"
+              value={money(bankroll)}
+              testid="bankroll"
+              tone={broke ? 'bad' : bankroll >= startBankroll ? 'good' : undefined}
+            />
+            <Readout label="Break-even premium" value={money(breakEven)} testid="break-even" />
+            <Readout label="Years run" value={String(yearsRun)} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-center">
+            <Readout
+              label="This year, per driver"
+              value={realizedMargin === null ? '—' : signed(realizedMargin)}
+              sub={
+                realizedMargin === null
+                  ? `long-run avg ${signed(expectedMargin)}/driver`
+                  : `vs ${signed(expectedMargin)}/driver avg · ${lastYear?.crashes} crash${lastYear?.crashes === 1 ? '' : 'es'}`
+              }
+              tone={realizedMargin === null ? undefined : realizedMargin >= 0 ? 'good' : 'bad'}
+            />
+            <Readout
+              label="Charged premium"
+              value={money(premium)}
+              sub={`margin ${signed(expectedMargin)}/driver (avg)`}
+            />
+          </div>
         </div>
-        <canvas
-          ref={townRef}
-          className="h-48 w-full rounded-xl bg-white ring-1 ring-slate-100"
-          aria-label={`A town of ${customers.toLocaleString()} insured drivers`}
-        />
-      </div>
-
-      {/* Vault + ledger readouts. */}
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <Readout
-          label="Bankroll"
-          value={money(bankroll)}
-          testid="bankroll"
-          tone={broke ? 'bad' : bankroll >= startBankroll ? 'good' : undefined}
-        />
-        <Readout label="Break-even premium" value={money(breakEven)} testid="break-even" />
-        <Readout label="Years run" value={String(yearsRun)} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 text-center">
-        <Readout
-          label="This year, per driver"
-          value={realizedMargin === null ? '—' : signed(realizedMargin)}
-          sub={
-            realizedMargin === null
-              ? `long-run avg ${signed(expectedMargin)}/driver`
-              : `vs ${signed(expectedMargin)}/driver avg · ${lastYear?.crashes} crash${lastYear?.crashes === 1 ? '' : 'es'}`
-          }
-          tone={realizedMargin === null ? undefined : realizedMargin >= 0 ? 'good' : 'bad'}
-        />
-        <Readout
-          label="Charged premium"
-          value={money(premium)}
-          sub={`margin ${signed(expectedMargin)}/driver (avg)`}
-        />
-      </div>
+      </StickyVisual>
 
       {/* After a 20-year fast-forward: the scale-free per-driver view plus a
           spread summary that tightens as the book of business grows. */}

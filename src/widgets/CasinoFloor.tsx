@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { WidgetProps } from './registry'
+import { StickyVisual } from './shared/StickyVisual'
 
 // L5 — THE CASINO FLOOR. You walk on with $100 and bet a single number on an
 // American roulette wheel: 35-to-1, but it only lands 1 spin in 38. A single
@@ -278,65 +279,73 @@ export function CasinoFloor({
 
   return (
     <div data-testid="casino-floor" className="space-y-4">
-      {/* The stage: roulette wheel front and center, with the chip stack that IS
-          the bankroll arranged beneath it. */}
-      <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-2xl bg-white p-6 ring-1 ring-slate-100">
-        <Wheel rotation={rotation} spinning={spinning} reduced={!!reduced} />
+      <StickyVisual>
+        <div className="space-y-4">
+          {/* The stage: roulette wheel front and center, with the chip stack that IS
+              the bankroll arranged beneath it. */}
+          <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-2xl bg-white p-6 ring-1 ring-slate-100">
+            <Wheel rotation={rotation} spinning={spinning} reduced={!!reduced} />
 
-        <div className="flex flex-col items-center gap-3">
-          <div className="text-center">
-            <p className="text-xs uppercase tracking-wide text-slate-400">
-              {isHouse ? 'The vault' : 'Your bankroll'}
-            </p>
-            <motion.p
-              key={Math.round(bankroll)}
-              initial={reduced ? false : { scale: flash ? 1.18 : 1 }}
-              animate={{ scale: 1 }}
-              data-testid="bankroll"
-              className={`text-4xl font-extrabold tabular-nums ${
-                flash === 'win' ? 'text-emerald-600' : flash === 'loss' ? 'text-rose-600' : 'text-ink'
-              }`}
-            >
-              ${Math.round(bankroll)}
-            </motion.p>
+            <div className="flex flex-col items-center gap-3">
+              <div className="text-center">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  {isHouse ? 'The vault' : 'Your bankroll'}
+                </p>
+                <motion.p
+                  key={Math.round(bankroll)}
+                  initial={reduced ? false : { scale: flash ? 1.18 : 1 }}
+                  animate={{ scale: 1 }}
+                  data-testid="bankroll"
+                  className={`text-4xl font-extrabold tabular-nums ${
+                    flash === 'win' ? 'text-emerald-600' : flash === 'loss' ? 'text-rose-600' : 'text-ink'
+                  }`}
+                >
+                  ${Math.round(bankroll)}
+                </motion.p>
+              </div>
+
+              {/* Chip stack — grows on a win, shrinks on a loss. */}
+              <div className="flex h-12 flex-wrap content-start items-end justify-center gap-0.5">
+                {chips.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-2.5 w-7 rounded-full ${
+                      isHouse ? 'bg-emerald-500/80' : 'bg-amber-400/90'
+                    } ring-1 ring-amber-700/20`}
+                  />
+                ))}
+                {chipCount === 0 && <span className="text-xs font-semibold text-rose-500">busted</span>}
+              </div>
+            </div>
           </div>
 
-          {/* Chip stack — grows on a win, shrinks on a loss. */}
-          <div className="flex h-12 flex-wrap content-start items-end justify-center gap-0.5">
-            {chips.map((_, i) => (
-              <span
-                key={i}
-                className={`h-2.5 w-7 rounded-full ${
-                  isHouse ? 'bg-emerald-500/80' : 'bg-amber-400/90'
-                } ring-1 ring-amber-700/20`}
-              />
-            ))}
-            {chipCount === 0 && <span className="text-xs font-semibold text-rose-500">busted</span>}
+          {/* Live numbers: EV per play sits beside the bankroll. */}
+          <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
+              <p className="text-xs text-slate-500">EV per play</p>
+              <p
+                data-testid="ev-per-play"
+                className={`text-base font-bold tabular-nums ${
+                  evPerPlay < 0 ? 'text-rose-600' : 'text-emerald-600'
+                }`}
+              >
+                {fmtSigned(evPerPlay)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
+              <p className="text-xs text-slate-500">Spins played</p>
+              <p data-testid="plays-run" className="text-base font-bold tabular-nums text-ink">
+                {playsRun}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </StickyVisual>
 
-      {/* Live numbers: EV per play sits beside the bankroll. */}
-      <div className="grid grid-cols-2 gap-2 text-center">
-        <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
-          <p className="text-xs text-slate-500">EV per play</p>
-          <p
-            data-testid="ev-per-play"
-            className={`text-base font-bold tabular-nums ${
-              evPerPlay < 0 ? 'text-rose-600' : 'text-emerald-600'
-            }`}
-          >
-            {fmtSigned(evPerPlay)}
-          </p>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-100">
-          <p className="text-xs text-slate-500">Spins played</p>
-          <p data-testid="plays-run" className="text-base font-bold tabular-nums text-ink">
-            {playsRun}
-          </p>
-        </div>
-      </div>
-
+      {/* Trajectory canvas lives outside the sticky region — it is a secondary
+          readout (historical path) that does not need to stay in frame while
+          the learner sets the wager or hits Spin. Keeping it here avoids the
+          sticky block becoming taller than the viewport on small screens. */}
       <canvas
         ref={canvasRef}
         className="h-28 w-full rounded-2xl bg-slate-50 ring-1 ring-slate-100"
