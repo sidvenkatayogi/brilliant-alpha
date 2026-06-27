@@ -36,7 +36,7 @@ export async function assignCohort(): Promise<string> {
   let lastErr: unknown
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await callApi<{ cohortId: string }>('assignCohort')
+      const res = await callApi<{ cohortId: string }>('cohort', { action: 'assignCohort' })
       return res.cohortId
     } catch (err) {
       lastErr = err
@@ -52,7 +52,8 @@ export async function generateMeetingOutline(
   weekId: string,
   force = false,
 ): Promise<{ outline: AiOutline; cached: boolean }> {
-  return callApi<{ outline: AiOutline; cached: boolean }>('generateMeetingOutline', {
+  return callApi<{ outline: AiOutline; cached: boolean }>('cohort', {
+    action: 'generateOutline',
     cohortId,
     weekId,
     force,
@@ -67,7 +68,11 @@ export async function getQuizAnswerKey(
   cohortId: string,
   weekId: string,
 ): Promise<QuizAnswer[]> {
-  const res = await callApi<{ answers: QuizAnswer[] }>('getQuizAnswerKey', { cohortId, weekId })
+  const res = await callApi<{ answers: QuizAnswer[] }>('cohort', {
+    action: 'getAnswerKey',
+    cohortId,
+    weekId,
+  })
   return res.answers
 }
 
