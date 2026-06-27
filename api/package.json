@@ -1,0 +1,4 @@
+{
+  "//": "Forces the Vercel serverless functions in this directory to compile as CommonJS, so relative imports between them resolve regardless of file extension. The repo root is an ESM package (type: module) for the Vite app; this scopes the functions to CJS to avoid Node's strict ESM extension resolution (ERR_MODULE_NOT_FOUND).",
+  "type": "commonjs"
+}
