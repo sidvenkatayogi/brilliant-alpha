@@ -47,6 +47,13 @@ service cloud.firestore {
             && request.auth.uid == uid
             && isMember();
         }
+
+        // The quiz answer key lives here. Clients are denied entirely — the
+        // answers are released only by the getQuizAnswerKey Cloud Function
+        // (Admin SDK), and only once the meeting time has arrived.
+        match /private/{doc} {
+          allow read, write: if false;
+        }
       }
     }
   }

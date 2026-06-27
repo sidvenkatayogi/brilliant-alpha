@@ -43,13 +43,41 @@ export interface SlotConfig {
   endHour: number
 }
 
+/** A single multiple-choice quiz question as shown to learners (no answer). */
+export interface QuizQuestion {
+  lessonId: string
+  question: string
+  options: string[]
+}
+
+/**
+ * The hidden answer for one quiz question. Never stored on the readable meeting
+ * doc — it lives in a Cloud-Function-only subdoc and is handed to the client by
+ * the `getQuizAnswerKey` callable, but only once the meeting time has arrived.
+ */
+export interface QuizAnswer {
+  /** Index into the question's `options` array. */
+  answerIndex: number
+  explanation: string
+}
+
+/** A quiz question with its answer baked in — the model/fallback output shape. */
+export type FullQuizQuestion = QuizQuestion & QuizAnswer
+
 /** The structured AI facilitator outline (PRD2 §6.4). */
 export interface AiOutline {
   warmUp: string
   agenda: { title: string; minutes: number; facilitatorNote: string }[]
   discussionQuestions: { lessonId: string; question: string }[]
+  /** ~5 multiple-choice questions everyone takes before/at the meeting. */
+  quiz: QuizQuestion[]
   peerTeachingActivity: string
   wrapUp: string
+}
+
+/** The model/fallback output before splitting into public outline + answer key. */
+export interface RawOutline extends Omit<AiOutline, 'quiz'> {
+  quiz: FullQuizQuestion[]
 }
 
 export interface AiOutlineMeta {

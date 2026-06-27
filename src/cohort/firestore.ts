@@ -21,6 +21,7 @@ import type {
   Meeting,
   MeetingProposal,
   MeetingStatus,
+  QuizAnswer,
   SlotConfig,
 } from './types'
 
@@ -31,6 +32,10 @@ const generateOutlineFn = httpsCallable<
   { cohortId: string; weekId: string; force?: boolean },
   { outline: AiOutline; cached: boolean }
 >(functions, 'generateMeetingOutline')
+const getQuizAnswerKeyFn = httpsCallable<
+  { cohortId: string; weekId: string },
+  { answers: QuizAnswer[] }
+>(functions, 'getQuizAnswerKey')
 
 /**
  * Lazily place the caller into a cohort (idempotent server-side). Retries a
@@ -59,6 +64,18 @@ export async function generateMeetingOutline(
 ): Promise<{ outline: AiOutline; cached: boolean }> {
   const res = await generateOutlineFn({ cohortId, weekId, force })
   return res.data
+}
+
+/**
+ * Fetch the quiz answer key. The Cloud Function only releases it once the
+ * confirmed meeting time has arrived; before that it throws (failed-precondition).
+ */
+export async function getQuizAnswerKey(
+  cohortId: string,
+  weekId: string,
+): Promise<QuizAnswer[]> {
+  const res = await getQuizAnswerKeyFn({ cohortId, weekId })
+  return res.data.answers
 }
 
 // --- Cohort + members -------------------------------------------------------

@@ -63,6 +63,29 @@ beforeEach(async () => {
       doc(db, 'cohorts', COHORT, 'meetings', '2026-W26', 'availability', 'ada'),
       { uid: 'ada', displayName: 'Ada', slots: [100] },
     )
+    // The quiz answer key, written by the Cloud Function into a private subdoc.
+    await setDoc(
+      doc(db, 'cohorts', COHORT, 'meetings', '2026-W26', 'private', 'answerKey'),
+      { answers: [{ answerIndex: 2, explanation: 'because c' }], generatedAt: 1 },
+    )
+  })
+})
+
+describe('quiz answer key (Cloud-Function-only)', () => {
+  it('blocks even a member from reading the answer key directly', async () => {
+    const db = env.authenticatedContext('maya').firestore()
+    await assertFails(
+      getDoc(doc(db, 'cohorts', COHORT, 'meetings', '2026-W26', 'private', 'answerKey')),
+    )
+  })
+
+  it('blocks a member from writing the answer key', async () => {
+    const db = env.authenticatedContext('maya').firestore()
+    await assertFails(
+      setDoc(doc(db, 'cohorts', COHORT, 'meetings', '2026-W26', 'private', 'answerKey'), {
+        answers: [{ answerIndex: 0, explanation: 'cheating' }],
+      }),
+    )
   })
 })
 

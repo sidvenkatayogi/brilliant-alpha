@@ -1,6 +1,9 @@
-// Two callable Cloud Functions (PRD2 §7):
+// Callable Cloud Functions (PRD2 §7):
 //   assignCohort           — transactional cohort matching/creation (Admin SDK)
-//   generateMeetingOutline — the one AI feature; holds the Anthropic API key
+//   generateMeetingOutline — the one AI feature; holds the OpenAI API key
+//   getQuizAnswerKey       — hands back the quiz answers, but only once the
+//                            meeting time has arrived (the answers are stored in
+//                            a Function-only subdoc clients cannot read).
 // Everything else (availability writes, overlap math, confirming a time, the
 // peer projection) stays client + security rules.
 
@@ -11,14 +14,14 @@ import { defineSecret } from 'firebase-functions/params'
 import { levelBand } from './shared/levelBand'
 import { cohortName } from './shared/cohortName'
 import { chooseExistingCohort, type CohortCandidate } from './cohortMatch'
-import type { AiOutline, LessonMetaLite } from './shared/types'
+import type { AiOutline, LessonMetaLite, QuizAnswer } from './shared/types'
 import { LESSON_META_BY_ID } from './lessonMeta'
-import { generateOutline } from './anthropic'
+import { generateOutline } from './openai'
 
 initializeApp()
 const db = getFirestore()
 
-const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY')
+const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY')
 
 const MAX_COHORT_SIZE = 6
 // Picking the fewest-members open cohort naturally fills toward the soft target
@@ -92,7 +95,7 @@ interface MemberProjection {
 }
 
 export const generateMeetingOutline = onCall(
-  { secrets: [ANTHROPIC_API_KEY] },
+  { secrets: [OPENAI_API_KEY] },
   async (request) => {
     const uid = request.auth?.uid
     if (!uid) throw new HttpsError('unauthenticated', 'Must be signed in.')
@@ -162,11 +165,11 @@ export const generateMeetingOutline = onCall(
     // generateOutline returns a deterministic stub in that case anyway.
     let apiKey: string | undefined
     try {
-      apiKey = ANTHROPIC_API_KEY.value() || undefined
+      apiKey = OPENAI_API_KEY.value() || undefined
     } catch {
       apiKey = undefined
     }
-    const { outline, usedFallback, model } = await generateOutline(
+    const { outline, answerKey, usedFallback, model } = await generateOutline(
       {
         cohortSize: memberUids.length,
         completed,
@@ -184,7 +187,69 @@ export const generateMeetingOutline = onCall(
     // Meeting doc may not exist yet if the outline is generated before the poll
     // is opened; merge-create so we never clobber other fields.
     await meetingRef.set({ aiOutline: outline, aiOutlineMeta }, { merge: true })
+    // The quiz answers go in a Function-only subdoc — security rules deny all
+    // client access, so peers can take the quiz but can't peek at the answers
+    // until getQuizAnswerKey hands them over at meeting time.
+    await meetingRef
+      .collection('private')
+      .doc('answerKey')
+      .set({ answers: answerKey, generatedAt: Date.now() })
 
     return { outline, cached: false }
   },
 )
+
+// ---------------------------------------------------------------------------
+// getQuizAnswerKey — release the quiz answers, but only once it's meeting time.
+// ---------------------------------------------------------------------------
+
+export const getQuizAnswerKey = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Must be signed in.')
+
+  const { cohortId, weekId } = (request.data ?? {}) as {
+    cohortId?: string
+    weekId?: string
+  }
+  if (!cohortId || !weekId) {
+    throw new HttpsError('invalid-argument', 'cohortId and weekId are required.')
+  }
+
+  // 1. Verify membership.
+  const cohortSnap = await db.collection('cohorts').doc(cohortId).get()
+  if (!cohortSnap.exists) throw new HttpsError('not-found', 'Cohort not found.')
+  const memberUids: string[] = cohortSnap.get('memberUids') ?? []
+  if (!memberUids.includes(uid)) {
+    throw new HttpsError('permission-denied', 'Not a member of this cohort.')
+  }
+
+  const meetingRef = db
+    .collection('cohorts')
+    .doc(cohortId)
+    .collection('meetings')
+    .doc(weekId)
+  const meetingSnap = await meetingRef.get()
+
+  // 2. Time gate: answers stay locked until the confirmed meeting time arrives.
+  const finalized = meetingSnap.get('finalizedSlotStart') as number | null | undefined
+  if (finalized == null) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Confirm a meeting time first — answers unlock once the meeting starts.',
+    )
+  }
+  if (Date.now() < finalized) {
+    throw new HttpsError(
+      'failed-precondition',
+      'The answer key unlocks at the meeting time.',
+    )
+  }
+
+  // 3. Release the answers from the Function-only subdoc.
+  const keySnap = await meetingRef.collection('private').doc('answerKey').get()
+  if (!keySnap.exists) {
+    throw new HttpsError('not-found', 'No quiz yet — generate the outline first.')
+  }
+  const answers = (keySnap.get('answers') ?? []) as QuizAnswer[]
+  return { answers }
+})

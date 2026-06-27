@@ -14,6 +14,7 @@ import {
   fetchMemberProgress,
   ensureMeeting,
   generateMeetingOutline,
+  getQuizAnswerKey,
   saveAvailability,
   setMeetingLink as setMeetingLinkFn,
   setMeetingScheduling,
@@ -28,6 +29,7 @@ import type {
   MemberProgress,
   Meeting,
   MeetingProposal,
+  QuizAnswer,
 } from './types'
 
 interface CohortContextValue {
@@ -55,6 +57,8 @@ interface CohortContextValue {
   changeTime: () => Promise<void>
   setMeetingLink: (link: string) => Promise<void>
   generateOutline: (force?: boolean) => Promise<AiOutline>
+  /** Fetch the quiz answer key — throws until the confirmed meeting time. */
+  fetchAnswerKey: () => Promise<QuizAnswer[]>
 }
 
 const CohortContext = createContext<CohortContextValue | null>(null)
@@ -261,6 +265,11 @@ export function CohortProvider({ children }: { children: ReactNode }) {
     [cohort, weekId],
   )
 
+  const fetchAnswerKey = useCallback(async () => {
+    if (!cohort) throw new Error('No cohort')
+    return getQuizAnswerKey(cohort.id, weekId)
+  }, [cohort, weekId])
+
   return (
     <CohortContext.Provider
       value={{
@@ -281,6 +290,7 @@ export function CohortProvider({ children }: { children: ReactNode }) {
         changeTime,
         setMeetingLink,
         generateOutline,
+        fetchAnswerKey,
       }}
     >
       {children}

@@ -63,10 +63,10 @@ src/
   player/       LessonPlayer · StepRenderer · steps/* · FeedbackPanel · WidgetHost · scenario/ScenarioContext
   auth/         AuthContext · AuthForm · ProtectedRoute
   progress/     ProgressContext · firestore.ts · types.ts
-  cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · cohortName · scheduling · avatar · PeerAvatars   (Phase 2)
+  cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · calendar · cohortName · scheduling · avatar · PeerAvatars   (Phase 2)
   screens/      Dashboard · LessonRoute · CompletionScreen · Profile · Group
   lib/          firebase.ts (init + emulator wiring)
-functions/      Cloud Functions (TypeScript): assignCohort · generateMeetingOutline   (Phase 2)
+functions/      Cloud Functions (TypeScript): assignCohort · generateMeetingOutline · getQuizAnswerKey   (Phase 2)
 ```
 
 **Key guarantees**
@@ -93,19 +93,26 @@ All under a **Group** tab (`/group`), reached from the **View your group / Join 
   as **absolute UTC instants**, rendered in each member's local timezone. Overlap + suggested slot compute client-side.
   Times are **proposed → approved by the whole group → locked** (no member decides unilaterally); all proposed times
   stay viewable, you can withdraw an approval, and a meeting link can be pasted.
-- **AI meeting outline** — `generateMeetingOutline` calls `claude-sonnet-4-6` (key in a Functions secret), grounded in
-  the lessons the cohort has completed; strict JSON, parsed defensively, cached on the meeting, with a static fallback.
+- **AI meeting outline + group quiz** — `generateMeetingOutline` calls OpenAI `gpt-4o-mini` (key in a Functions secret),
+  grounded in the lessons the **whole cohort** has completed; strict JSON, parsed defensively, cached on the meeting,
+  with a static fallback. The outline includes a short (~5 question) multiple-choice quiz everyone takes.
+- **Quiz answer key, time-gated** — quiz questions are public, but the answers live in a Cloud-Function-only subdoc
+  (`meetings/{wid}/private/answerKey`, denied to all clients). `getQuizAnswerKey` releases them only once the confirmed
+  meeting time has arrived, and only when the learner presses **Reveal answer key**.
+- **Calendar invites** — once a time is locked, members can add the meeting to their calendar via a downloadable `.ics`
+  (Apple/Google/Outlook) or a one-click Google Calendar link; both embed the full outline + quiz questions.
 - **Peer progress on the course path** — each lesson card shows cohort-mates who started/completed it (randomized
   avatar colors), or "be the first one to complete this lesson!" until someone does. Presence, never rankings/scores.
 
-**Backend** (first for this codebase): two callable Cloud Functions in `functions/` — `assignCohort` (transactional)
-and `generateMeetingOutline` (holds the Anthropic key). Everything else stays client + security rules. The Anthropic
-call is **stubbed under the emulator**, so tests and local runs never hit the real API.
+**Backend** (first for this codebase): callable Cloud Functions in `functions/` — `assignCohort` (transactional),
+`generateMeetingOutline` (holds the OpenAI key), and `getQuizAnswerKey` (time-gated answer release). Everything else
+stays client + security rules. The OpenAI call is **stubbed under the emulator**, so tests and local runs never hit the
+real API.
 
 ## Tech stack
 
 Vite + React 18 + TypeScript · Tailwind (mobile-first) · React Router · Firebase Auth (email/password + Google) ·
-Cloud Firestore · **Cloud Functions + Anthropic SDK (Phase 2, functions package only)** · Firebase Hosting ·
+Cloud Firestore · **Cloud Functions + OpenAI SDK (Phase 2, functions package only)** · Firebase Hosting ·
 Vitest + React Testing Library · Playwright · Firebase Emulator Suite.
 
 ## Setup
@@ -124,15 +131,15 @@ npm run dev                       # http://localhost:5173
    hiding them.
 2. **Authentication → Sign-in method:** enable **Email/Password** and **Google**.
 3. `firebase login` (once) before deploying.
-4. **Phase 2 — Cloud Functions** require the **Blaze (pay-as-you-go)** plan + the Anthropic key as a Functions
-   **secret** (never committed): `firebase functions:secrets:set ANTHROPIC_API_KEY`. The model is a one-line constant
-   in `functions/src/anthropic.ts` (`claude-sonnet-4-6`).
+4. **Phase 2 — Cloud Functions** require the **Blaze (pay-as-you-go)** plan + the OpenAI key as a Functions
+   **secret** (never committed): `firebase functions:secrets:set OPENAI_API_KEY`. The model is a one-line constant
+   in `functions/src/openai.ts` (`gpt-4o-mini`).
 
 ### Run against the local emulators (no live project needed)
 
 ```bash
 # Phase 2 — build functions, then start Auth + Firestore + Functions on a demo
-# project (no real credentials, no Anthropic key needed — the outline is stubbed).
+# project (no real credentials, no OpenAI key needed — the outline is stubbed).
 npm run emulators:all        # UI :4000 · functions :5001
 npm run dev:test             # in another shell → http://localhost:5173 (uses .env.test)
 
@@ -147,7 +154,7 @@ npm run seed:demo            # after the emulators are up; re-run any time to re
 ```bash
 npm test                     # Vitest — engine, feedback, mastery, streaks, content, widgets, cohort logic
 npm run test:integration     # Firestore rules (emulator) — Phase 1 + cohort privacy boundary
-npm --prefix functions test  # Cloud Functions — cohort matching, prompt building, AI outline (Anthropic mocked)
+npm --prefix functions test  # Cloud Functions — cohort matching, prompt building, AI outline + quiz (OpenAI mocked)
 npm run test:e2e             # Playwright — MVP + Group scenarios (auto-starts emulators incl. functions)
 ```
 
@@ -156,7 +163,7 @@ npm run test:e2e             # Playwright — MVP + Group scenarios (auto-starts
   **two-timezone** test, peer-progress state machine, outline parse/fallback, cohort-name generator, and `allApproved`.
 - **Integration (emulator):** Phase 1 cross-user rules + the Phase 2 cohort privacy boundary (non-members blocked, no
   cross-member writes, no client `memberUids` write, projection has no forbidden fields).
-- **Functions (Anthropic mocked — CI never calls the real API):** `assignCohort` matching, prompt construction, and
+- **Functions (OpenAI mocked — CI never calls the real API):** `assignCohort` matching, prompt construction, and
   outline cache / malformed-JSON / API-error fallback paths.
 - **E2E (Playwright):** Phase 1 flows **plus** Phase 2 — join via the CTA, propose → approve → lock + link, outline
   cached for a second member, and peer presence (be-the-first → peer icon) on the course path; mobile included.
@@ -167,7 +174,7 @@ npm run test:e2e             # Playwright — MVP + Group scenarios (auto-starts
 npm run deploy               # vite build + firebase deploy (hosting + Firestore rules + Functions)
 ```
 
-Phase 2 deploy prerequisites: the project is on **Blaze** and `ANTHROPIC_API_KEY` is set as a Functions secret (see
+Phase 2 deploy prerequisites: the project is on **Blaze** and `OPENAI_API_KEY` is set as a Functions secret (see
 Setup). A few pure helpers (`levelBand`, `cohortName`, outline parse/fallback) are duplicated in
 `functions/src/shared/` because the functions package builds independently — keep the copies in sync.
 

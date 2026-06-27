@@ -6,8 +6,9 @@ import { lessonsById } from '../content/loadLessons'
 import { computeOverlap, suggestBestSlot } from '../cohort/overlap'
 import { generateSlots, labelSlot } from '../cohort/slots'
 import { avatarColor, avatarInitial } from '../cohort/avatar'
+import { buildIcs, downloadIcs, googleCalendarUrl } from '../cohort/calendar'
 import AvailabilityGrid from '../widgets/AvailabilityGrid'
-import type { AiOutline } from '../cohort/types'
+import type { AiOutline, QuizAnswer } from '../cohort/types'
 
 export default function Group() {
   const { user } = useAuth()
@@ -26,6 +27,7 @@ export default function Group() {
     changeTime,
     setMeetingLink,
     generateOutline,
+    fetchAnswerKey,
   } = useCohort()
 
   // Lazily assign + load on first open (PRD2 D3).
@@ -43,9 +45,30 @@ export default function Group() {
   const [outlineBusy, setOutlineBusy] = useState(false)
   const [outlineError, setOutlineError] = useState<string | null>(null)
   const [outline, setOutline] = useState<AiOutline | null>(null)
+  // Quiz state: each member's own picks (personal self-check, not persisted) and
+  // the answer key once they've unlocked it at meeting time.
+  const [quizPicks, setQuizPicks] = useState<Record<number, number>>({})
+  const [answerKey, setAnswerKey] = useState<QuizAnswer[] | null>(null)
+  const [keyBusy, setKeyBusy] = useState(false)
+  const [keyError, setKeyError] = useState<string | null>(null)
   useEffect(() => {
     setOutline(meeting?.aiOutline ?? null)
+    // A fresh/regenerated outline means a fresh quiz — drop stale picks + key.
+    setQuizPicks({})
+    setAnswerKey(null)
+    setKeyError(null)
   }, [meeting?.aiOutline])
+  const revealKey = useCallback(async () => {
+    setKeyBusy(true)
+    setKeyError(null)
+    try {
+      setAnswerKey(await fetchAnswerKey())
+    } catch (e) {
+      setKeyError(e instanceof Error ? e.message : 'Could not unlock the answer key.')
+    } finally {
+      setKeyBusy(false)
+    }
+  }, [fetchAnswerKey])
   const runOutline = useCallback(
     async (force: boolean) => {
       setOutlineBusy(true)
@@ -272,6 +295,42 @@ export default function Group() {
                 </button>
               </div>
             )}
+            {finalized != null && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  data-testid="download-ics"
+                  onClick={() =>
+                    downloadIcs(
+                      `${(cohort?.name ?? 'cohort').replace(/\s+/g, '-').toLowerCase()}-meeting.ics`,
+                      buildIcs({
+                        title: `${cohort?.name ?? 'Cohort'} · study meeting`,
+                        start: finalized,
+                        outline,
+                        location: meeting.meetingLink,
+                      }),
+                    )
+                  }
+                >
+                  📅 Add to calendar (.ics)
+                </button>
+                <a
+                  className="btn-ghost"
+                  data-testid="google-calendar"
+                  href={googleCalendarUrl({
+                    title: `${cohort?.name ?? 'Cohort'} · study meeting`,
+                    start: finalized,
+                    outline,
+                    location: meeting.meetingLink,
+                  })}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Google Calendar
+                </a>
+              </div>
+            )}
             <div className="mt-3 flex gap-4 text-sm text-slate-400">
               <button
                 type="button"
@@ -447,6 +506,9 @@ export default function Group() {
               <p className="text-xs font-bold uppercase tracking-wide text-accent">Wrap-up</p>
               <p className="text-sm text-ink">{current.wrapUp}</p>
             </div>
+
+            {current.quiz && current.quiz.length > 0 && <QuizBlock quiz={current.quiz} />}
+
             <button
               type="button"
               className="text-sm text-slate-400 hover:text-ink disabled:opacity-40"
@@ -460,6 +522,96 @@ export default function Group() {
           </div>
         )}
       </section>
+    )
+  }
+
+  // --- Quiz (inside the outline) ------------------------------------------
+  // Everyone takes the same ~5 questions. Picks are a personal self-check (not
+  // stored). The answer key is fetched on demand and only succeeds once the
+  // confirmed meeting time has arrived (enforced server-side).
+  function QuizBlock({ quiz }: { quiz: AiOutline['quiz'] }) {
+    const finalized = meeting?.finalizedSlotStart ?? null
+    const unlocked = finalized != null && Date.now() >= finalized
+
+    return (
+      <div data-testid="quiz">
+        <p className="text-xs font-bold uppercase tracking-wide text-accent">
+          Group quiz · {quiz.length} questions
+        </p>
+        <p className="mt-0.5 text-xs text-slate-400">
+          Everyone answers; the answer key unlocks at meeting time.
+        </p>
+        <ol className="mt-2 space-y-4">
+          {quiz.map((q, qi) => {
+            const pick = quizPicks[qi]
+            const ans = answerKey?.[qi]
+            return (
+              <li key={qi} data-testid={`quiz-q-${qi}`}>
+                <p className="text-sm font-semibold text-ink">
+                  {qi + 1}. {q.question}
+                </p>
+                <div className="mt-1.5 space-y-1.5">
+                  {q.options.map((opt, oi) => {
+                    const selected = pick === oi
+                    const isCorrect = ans != null && ans.answerIndex === oi
+                    const wrongPick = ans != null && selected && !isCorrect
+                    const cls = isCorrect
+                      ? 'ring-good bg-good/10 text-ink'
+                      : wrongPick
+                        ? 'ring-bad bg-bad/10 text-ink'
+                        : selected
+                          ? 'ring-accent bg-accent/5 text-ink'
+                          : 'ring-slate-200 text-slate-600 hover:ring-slate-300'
+                    return (
+                      <button
+                        type="button"
+                        key={oi}
+                        data-testid={`quiz-opt-${qi}-${oi}`}
+                        onClick={() => setQuizPicks((p) => ({ ...p, [qi]: oi }))}
+                        className={`flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm ring-1 ${cls}`}
+                      >
+                        <span className="font-semibold">{String.fromCharCode(65 + oi)}.</span>
+                        <span className="flex-1">{opt}</span>
+                        {isCorrect && <span className="font-bold text-good">✓</span>}
+                        {wrongPick && <span className="font-bold text-bad">✕</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+                {ans && (
+                  <p className="mt-1.5 text-xs text-slate-500" data-testid={`quiz-explain-${qi}`}>
+                    {ans.explanation}
+                  </p>
+                )}
+              </li>
+            )
+          })}
+        </ol>
+
+        {!answerKey ? (
+          <div className="mt-3">
+            <button
+              type="button"
+              data-testid="reveal-answer-key"
+              disabled={!unlocked || keyBusy}
+              onClick={() => void revealKey()}
+              className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+              title={unlocked ? 'Check your answers' : 'Unlocks once the meeting starts'}
+            >
+              {keyBusy
+                ? 'Unlocking…'
+                : unlocked
+                  ? 'Reveal answer key'
+                  : '🔒 Answer key unlocks at meeting time'}
+            </button>
+            {keyError && <p className="mt-2 text-sm text-bad" data-testid="answer-key-error">{keyError}</p>}
+          </div>
+        ) : (
+          <p className="mt-3 text-xs font-medium text-good" data-testid="answer-key-revealed">
+            Answer key revealed — correct answers marked ✓.
+          </p>
+        )}
+      </div>
     )
   }
 }

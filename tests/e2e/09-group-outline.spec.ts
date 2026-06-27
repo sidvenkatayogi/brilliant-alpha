@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 
 // Two fresh users both have 0 lessons completed → level band 0 → the same cohort
 // (the first creates it, the second joins). The AI call resolves to the
-// emulator's deterministic stub, so no real Anthropic request is made.
+// emulator's deterministic stub, so no real OpenAI request is made.
 const BASE_URL = 'http://localhost:5173'
 
 let seq = 0
@@ -37,6 +37,14 @@ test('outline generates once and is cached for the whole cohort', async ({ brows
   await pageA.getByTestId('generate-outline').click()
   await expect(pageA.getByTestId('outline')).toBeVisible()
   await expect(pageA.getByText('Warm-up', { exact: true })).toBeVisible()
+
+  // The outline includes the group quiz, and the answer key stays locked until a
+  // meeting time is confirmed — the button shows the locked state and is disabled.
+  await expect(pageA.getByTestId('quiz')).toBeVisible()
+  const revealKey = pageA.getByTestId('reveal-answer-key')
+  await expect(revealKey).toBeVisible()
+  await expect(revealKey).toBeDisabled()
+  await expect(revealKey).toContainText('unlocks at meeting time')
 
   // Bo joins the same cohort and opens the Group tab.
   const ctxB = await browser.newContext()

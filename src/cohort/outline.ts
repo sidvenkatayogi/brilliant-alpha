@@ -30,7 +30,7 @@ function stripFences(raw: string): string {
 function isOutline(v: unknown): v is AiOutline {
   if (!v || typeof v !== 'object') return false
   const o = v as Record<string, unknown>
-  return (
+  const baseOk =
     typeof o.warmUp === 'string' &&
     Array.isArray(o.agenda) &&
     o.agenda.every(
@@ -51,6 +51,19 @@ function isOutline(v: unknown): v is AiOutline {
     ) &&
     typeof o.peerTeachingActivity === 'string' &&
     typeof o.wrapUp === 'string'
+  if (!baseOk) return false
+  // The quiz is optional for backward-compatibility with pre-quiz outlines.
+  if (o.quiz === undefined) return true
+  return (
+    Array.isArray(o.quiz) &&
+    o.quiz.every(
+      (q) =>
+        q &&
+        typeof q === 'object' &&
+        typeof (q as Record<string, unknown>).lessonId === 'string' &&
+        typeof (q as Record<string, unknown>).question === 'string' &&
+        Array.isArray((q as Record<string, unknown>).options),
+    )
   )
 }
 
@@ -90,6 +103,16 @@ export function fallbackOutline(completedLessons: LessonMetaLite[]): AiOutline {
             question: `In "${l.title}", ${l.conceptSummary} — where have you seen this play out, and where does your gut still disagree with it?`,
           }))
         : [{ lessonId: '', question: 'What is the most surprising thing probability has taught you so far?' }],
+    // Public quiz (questions only) for parity with the backend fallback. The
+    // real answer key is produced server-side; this client copy is test-only.
+    quiz:
+      lessons.length > 0
+        ? lessons.map((l) => ({
+            lessonId: l.id,
+            question: `Which statement best captures the core idea of "${l.title}"?`,
+            options: [l.conceptSummary, 'None of these', 'It only applies to coins and dice', 'Past outcomes make the next one "due"'],
+          }))
+        : [],
     peerTeachingActivity:
       first != null
         ? `Pick one person to explain "${first.title}" to the group as if to a friend who never took stats — no formulas, just the intuition.`
