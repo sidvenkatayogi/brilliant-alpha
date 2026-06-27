@@ -11,8 +11,8 @@ import {
   collection,
   serverTimestamp,
 } from 'firebase/firestore'
-import { httpsCallable } from 'firebase/functions'
-import { db, functions } from '../lib/firebase'
+import { db } from '../lib/firebase'
+import { callApi } from '../lib/api'
 import type {
   AiOutline,
   Availability,
@@ -25,29 +25,19 @@ import type {
   SlotConfig,
 } from './types'
 
-// --- Callables --------------------------------------------------------------
-
-const assignCohortFn = httpsCallable<void, { cohortId: string }>(functions, 'assignCohort')
-const generateOutlineFn = httpsCallable<
-  { cohortId: string; weekId: string; force?: boolean },
-  { outline: AiOutline; cached: boolean }
->(functions, 'generateMeetingOutline')
-const getQuizAnswerKeyFn = httpsCallable<
-  { cohortId: string; weekId: string },
-  { answers: QuizAnswer[] }
->(functions, 'getQuizAnswerKey')
+// --- Serverless API (Vercel /api) -------------------------------------------
 
 /**
  * Lazily place the caller into a cohort (idempotent server-side). Retries a
- * couple of times so a transient cold-start failure on the first callable
- * invocation doesn't surface as "couldn't load your group".
+ * couple of times so a transient cold-start failure on the first API call
+ * doesn't surface as "couldn't load your group".
  */
 export async function assignCohort(): Promise<string> {
   let lastErr: unknown
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await assignCohortFn()
-      return res.data.cohortId
+      const res = await callApi<{ cohortId: string }>('assignCohort')
+      return res.cohortId
     } catch (err) {
       lastErr = err
       await new Promise((r) => setTimeout(r, 800 * (attempt + 1)))
@@ -62,20 +52,23 @@ export async function generateMeetingOutline(
   weekId: string,
   force = false,
 ): Promise<{ outline: AiOutline; cached: boolean }> {
-  const res = await generateOutlineFn({ cohortId, weekId, force })
-  return res.data
+  return callApi<{ outline: AiOutline; cached: boolean }>('generateMeetingOutline', {
+    cohortId,
+    weekId,
+    force,
+  })
 }
 
 /**
- * Fetch the quiz answer key. The Cloud Function only releases it once the
- * confirmed meeting time has arrived; before that it throws (failed-precondition).
+ * Fetch the quiz answer key. The API only releases it once the confirmed
+ * meeting time has arrived; before that it throws.
  */
 export async function getQuizAnswerKey(
   cohortId: string,
   weekId: string,
 ): Promise<QuizAnswer[]> {
-  const res = await getQuizAnswerKeyFn({ cohortId, weekId })
-  return res.data.answers
+  const res = await callApi<{ answers: QuizAnswer[] }>('getQuizAnswerKey', { cohortId, weekId })
+  return res.answers
 }
 
 // --- Cohort + members -------------------------------------------------------

@@ -1,4 +1,4 @@
-// Slim shared types for the functions package. Mirrors the client's
+// Slim shared types for the serverless API. Mirrors the client's
 // src/cohort/types.ts for the bits the backend touches.
 
 /** A single multiple-choice quiz question as shown to learners (no answer). */

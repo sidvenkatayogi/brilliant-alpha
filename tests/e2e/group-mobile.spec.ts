@@ -4,7 +4,7 @@ import { signUp } from './helpers'
 // PRD2 §13 scenario 5: the whole Group tab works on a phone-sized viewport with
 // touch. Runs under the Playwright "mobile" project (Pixel 5, touch enabled).
 test('Group tab works on a phone with touch', async ({ page }) => {
-  test.slow() // first assignCohort call may cold-start the functions emulator
+  test.slow() // first /api call may cold-load the serverless handler in the dev server
   await signUp(page)
 
   await page.getByTestId('group-cta').tap() // "Join a group"

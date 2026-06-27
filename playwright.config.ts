@@ -25,11 +25,11 @@ export default defineConfig({
   ],
   webServer: [
     {
-      // Build the Cloud Functions then boot auth + firestore + functions. The
-      // outline function returns a deterministic stub under the emulator, so the
-      // Anthropic API is never called in e2e (PRD2 §13).
-      command:
-        'npm --prefix functions run build && firebase emulators:start --only auth,firestore,functions --project demo-long-run',
+      // Boot auth + firestore emulators. The serverless /api functions run inside
+      // the Vite dev server (see the api-dev-server plugin in vite.config.ts) and
+      // talk to these emulators; the outline generator returns a deterministic
+      // stub under the emulator, so the OpenAI API is never called in e2e.
+      command: 'firebase emulators:start --only auth,firestore --project demo-long-run',
       url: 'http://127.0.0.1:4000',
       reuseExistingServer: !isCI,
       timeout: 120_000,
@@ -40,6 +40,12 @@ export default defineConfig({
       url: BASE_URL,
       reuseExistingServer: !isCI,
       timeout: 60_000,
+      // The /api handlers' Admin SDK targets the emulators in test mode.
+      env: {
+        FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
+        FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099',
+        GCLOUD_PROJECT: 'demo-long-run',
+      },
     },
   ],
 })

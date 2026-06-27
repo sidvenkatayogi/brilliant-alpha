@@ -4,7 +4,7 @@
 // filled availability — but the login account's OWN availability left empty so
 // you can demo adding it and watching the overlap update.
 //
-//   1) npm run emulators:all       (in one terminal — starts auth+firestore+functions)
+//   1) npm run emulators           (in one terminal — starts auth + firestore)
 //   2) npm run seed:demo           (in another terminal — runs this script)
 //   3) npm run dev:test            (open http://localhost:5173 and log in)
 //

@@ -65,8 +65,8 @@ src/
   progress/     ProgressContext · firestore.ts · types.ts
   cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · calendar · cohortName · scheduling · avatar · PeerAvatars   (Phase 2)
   screens/      Dashboard · LessonRoute · CompletionScreen · Profile · Group
-  lib/          firebase.ts (init + emulator wiring)
-functions/      Cloud Functions (TypeScript): assignCohort · generateMeetingOutline · getQuizAnswerKey   (Phase 2)
+  lib/          firebase.ts (Auth + Firestore init) · api.ts (authed fetch to /api)
+api/            Vercel serverless functions: assignCohort · generateMeetingOutline · getQuizAnswerKey · _lib/ (admin, openai, outline, …)   (Phase 2)
 ```
 
 **Key guarantees**
@@ -93,35 +93,35 @@ All under a **Group** tab (`/group`), reached from the **View your group / Join 
   as **absolute UTC instants**, rendered in each member's local timezone. Overlap + suggested slot compute client-side.
   Times are **proposed → approved by the whole group → locked** (no member decides unilaterally); all proposed times
   stay viewable, you can withdraw an approval, and a meeting link can be pasted.
-- **AI meeting outline + group quiz** — `generateMeetingOutline` calls OpenAI `gpt-4o-mini` (key in a Functions secret),
-  grounded in the lessons the **whole cohort** has completed; strict JSON, parsed defensively, cached on the meeting,
-  with a static fallback. The outline includes a short (~5 question) multiple-choice quiz everyone takes.
-- **Quiz answer key, time-gated** — quiz questions are public, but the answers live in a Cloud-Function-only subdoc
-  (`meetings/{wid}/private/answerKey`, denied to all clients). `getQuizAnswerKey` releases them only once the confirmed
-  meeting time has arrived, and only when the learner presses **Reveal answer key**.
+- **AI meeting outline + group quiz** — `POST /api/generateMeetingOutline` (a Vercel serverless function) calls OpenAI
+  `gpt-4o-mini`, grounded in the lessons the **whole cohort** has completed; strict JSON, parsed defensively, cached on
+  the meeting, with a static fallback. The outline includes a short (~5 question) multiple-choice quiz everyone takes.
+- **Quiz answer key, time-gated** — quiz questions are public, but the answers live in a server-only subdoc
+  (`meetings/{wid}/private/answerKey`, denied to all clients). `POST /api/getQuizAnswerKey` releases them only once the
+  confirmed meeting time has arrived, and only when the learner presses **Reveal answer key**.
 - **Calendar invites** — once a time is locked, members can add the meeting to their calendar via a downloadable `.ics`
   (Apple/Google/Outlook) or a one-click Google Calendar link; both embed the full outline + quiz questions.
 - **Peer progress on the course path** — each lesson card shows cohort-mates who started/completed it (randomized
   avatar colors), or "be the first one to complete this lesson!" until someone does. Presence, never rankings/scores.
 
-**Backend** (first for this codebase): callable Cloud Functions in `functions/` — `assignCohort` (transactional),
-`generateMeetingOutline` (holds the OpenAI key), and `getQuizAnswerKey` (time-gated answer release). Everything else
-stays client + security rules. The OpenAI call is **stubbed under the emulator**, so tests and local runs never hit the
-real API.
+**Backend**: three **Vercel serverless functions** in `api/` — `assignCohort` (transactional cohort matching),
+`generateMeetingOutline` (holds the OpenAI key), and `getQuizAnswerKey` (time-gated answer release). Each verifies the
+caller's Firebase ID token with the Admin SDK; the client calls them with `fetch` (`src/lib/api.ts`). Firebase Auth +
+Firestore remain the data backend. Everything else stays client + security rules. The OpenAI call is **stubbed against
+the emulator**, so tests and local runs never hit the real API.
 
 ## Tech stack
 
 Vite + React 18 + TypeScript · Tailwind (mobile-first) · React Router · Firebase Auth (email/password + Google) ·
-Cloud Firestore · **Cloud Functions + OpenAI SDK (Phase 2, functions package only)** · Firebase Hosting ·
+Cloud Firestore · **Vercel serverless functions (`api/`) + firebase-admin + OpenAI SDK** · Vercel Hosting ·
 Vitest + React Testing Library · Playwright · Firebase Emulator Suite.
 
 ## Setup
 
 ```bash
 npm install
-npm --prefix functions install   # Cloud Functions deps (Phase 2)
-cp .env.example .env.local        # then fill in your Firebase web config (see below)
-npm run dev                       # http://localhost:5173
+cp .env.example .env.local        # fill in your Firebase web config + (for live /api) the server vars
+npm run dev                       # http://localhost:5173 (the dev server also serves /api)
 ```
 
 ### Firebase project (one-time)
@@ -130,53 +130,57 @@ npm run dev                       # http://localhost:5173
    (the `VITE_FIREBASE_*` keys). These are safe to ship in client builds — data is protected by Firestore rules, not by
    hiding them.
 2. **Authentication → Sign-in method:** enable **Email/Password** and **Google**.
-3. `firebase login` (once) before deploying.
-4. **Phase 2 — Cloud Functions** require the **Blaze (pay-as-you-go)** plan + the OpenAI key as a Functions
-   **secret** (never committed): `firebase functions:secrets:set OPENAI_API_KEY`. The model is a one-line constant
-   in `functions/src/openai.ts` (`gpt-4o-mini`).
+3. Push the Firestore security rules (kept in `firestore.rules`): `firebase login` once, then `npm run deploy:rules`.
+4. **Service account for `/api`:** Project settings → Service accounts → *Generate new private key*. Put
+   `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` + `OPENAI_API_KEY` in Vercel's env (and in
+   `.env.local` for local dev against a live backend). Under the emulators none of these are needed.
 
 ### Run against the local emulators (no live project needed)
 
 ```bash
-# Phase 2 — build functions, then start Auth + Firestore + Functions on a demo
-# project (no real credentials, no OpenAI key needed — the outline is stubbed).
-npm run emulators:all        # UI :4000 · functions :5001
+# Start Auth + Firestore on a demo project (no real credentials, no OpenAI key
+# needed — the outline is stubbed). The /api functions run inside the Vite dev
+# server (dev:test) and talk to these emulators.
+npm run emulators            # UI :4000 · auth :9099 · firestore :8080
 npm run dev:test             # in another shell → http://localhost:5173 (uses .env.test)
 
 # Optional: seed a ready-made demo cohort (log in as demo@longrun.app / demo1234)
 npm run seed:demo            # after the emulators are up; re-run any time to reset
-
-# (Phase 1 only: `npm run emulators` starts just Auth + Firestore.)
 ```
 
 ## Testing
 
 ```bash
-npm test                     # Vitest — engine, feedback, mastery, streaks, content, widgets, cohort logic
+npm test                     # Vitest — engine, feedback, …, cohort + serverless logic (OpenAI mocked)
 npm run test:integration     # Firestore rules (emulator) — Phase 1 + cohort privacy boundary
-npm --prefix functions test  # Cloud Functions — cohort matching, prompt building, AI outline + quiz (OpenAI mocked)
-npm run test:e2e             # Playwright — MVP + Group scenarios (auto-starts emulators incl. functions)
+npm run test:e2e             # Playwright — MVP + Group scenarios (auto-starts emulators; /api runs in the dev server)
 ```
 
 - **Unit/component:** answer-checking, feedback selection, mastery + unlock rule, streak transitions, step-renderer
   dispatch, widget logic, a content guard across the lessons, and (Phase 2) `levelBand`, overlap math incl. a
-  **two-timezone** test, peer-progress state machine, outline parse/fallback, cohort-name generator, and `allApproved`.
+  **two-timezone** test, peer-progress state machine, outline parse/fallback, cohort-name generator, `allApproved`, and
+  the serverless logic (`api/_lib`: cohort matching, prompt construction, outline cache / quiz split / fallback paths).
 - **Integration (emulator):** Phase 1 cross-user rules + the Phase 2 cohort privacy boundary (non-members blocked, no
-  cross-member writes, no client `memberUids` write, projection has no forbidden fields).
-- **Functions (OpenAI mocked — CI never calls the real API):** `assignCohort` matching, prompt construction, and
-  outline cache / malformed-JSON / API-error fallback paths.
-- **E2E (Playwright):** Phase 1 flows **plus** Phase 2 — join via the CTA, propose → approve → lock + link, outline
-  cached for a second member, and peer presence (be-the-first → peer icon) on the course path; mobile included.
+  cross-member writes, no client `memberUids` write, projection has no forbidden fields, quiz answer key is server-only).
+- **E2E (Playwright):** Phase 1 flows **plus** Phase 2 — join via the CTA, propose → approve → lock + link, outline +
+  quiz generated and cached for the cohort, answer key locked until meeting time, and peer presence on the course path;
+  mobile included.
 
-## Deploy (Firebase Hosting + Functions)
+## Deploy
+
+The app + the `api/` serverless functions deploy to **Vercel**; **Firebase** is used only for Auth + Firestore.
 
 ```bash
-npm run deploy               # vite build + firebase deploy (hosting + Firestore rules + Functions)
+# Vercel: connect the repo (or `vercel --prod`). Build command `npm run build`,
+# output dir `dist`. The api-dev-server Vite plugin is dev-only; on Vercel the
+# /api functions are served natively. The SPA fallback lives in vercel.json.
+npm run deploy:rules         # push the Firestore security rules (firebase deploy --only firestore:rules)
 ```
 
-Phase 2 deploy prerequisites: the project is on **Blaze** and `OPENAI_API_KEY` is set as a Functions secret (see
-Setup). A few pure helpers (`levelBand`, `cohortName`, outline parse/fallback) are duplicated in
-`functions/src/shared/` because the functions package builds independently — keep the copies in sync.
+Set these env vars in the Vercel project (Production + Preview): `OPENAI_API_KEY`, `FIREBASE_PROJECT_ID`,
+`FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (service account), plus the `VITE_FIREBASE_*` client config. A few pure
+helpers (`levelBand`, `cohortName`, outline parse/fallback) are duplicated in `api/_lib/` and `src/cohort/` — keep the
+copies in sync.
 
 ## Performance targets
 

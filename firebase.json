@@ -1,22 +1,12 @@
 {
-  "hosting": {
-    "public": "dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }]
-  },
+  "//": "App hosting + serverless functions live on Vercel (see vercel.json). Firebase is used only for Auth + Firestore. This file just defines the Firestore rules/indexes (deploy with `npm run deploy:rules`) and the local emulators.",
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs20",
-    "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
-  },
   "emulators": {
     "auth": { "port": 9099 },
     "firestore": { "port": 8080 },
-    "functions": { "port": 5001 },
     "ui": { "enabled": true, "port": 4000 },
     "singleProjectMode": true
   }

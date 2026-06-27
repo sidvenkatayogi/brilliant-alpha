@@ -1,16 +1,18 @@
+// Unit tests for the serverless API's pure logic (api/_lib/*). These replace the
+// old functions/ package tests after the migration to Vercel. The OpenAI SDK is
+// mocked so CI never calls the real API.
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { chooseExistingCohort } from '../src/cohortMatch'
-import { buildUserPrompt } from '../src/openai'
-import { levelBand } from '../src/shared/levelBand'
-import { cohortName } from '../src/shared/cohortName'
-import { parseOutline, fallbackOutline } from '../src/shared/outline'
-import { LESSON_META_BY_ID } from '../src/lessonMeta'
+import { chooseExistingCohort } from '../../api/_lib/cohortMatch'
+import { buildUserPrompt } from '../../api/_lib/openai'
+import { levelBand } from '../../api/_lib/levelBand'
+import { cohortName } from '../../api/_lib/cohortName'
+import { parseOutline, fallbackOutline } from '../../api/_lib/outline'
+import { LESSON_META_BY_ID } from '../../api/_lib/lessonMeta'
 
 describe('chooseExistingCohort (assignCohort matching logic)', () => {
   it('fills an under-capacity cohort', () => {
-    expect(
-      chooseExistingCohort([{ id: 'a', memberUids: ['x'], maxSize: 6 }]),
-    ).toBe('a')
+    expect(chooseExistingCohort([{ id: 'a', memberUids: ['x'], maxSize: 6 }])).toBe('a')
   })
 
   it('creates a new cohort (null) when none has room', () => {
@@ -80,7 +82,8 @@ describe('shared helpers stay in sync with the client copies', () => {
 })
 
 // generateOutline is tested with the OpenAI SDK mocked so CI never calls the
-// real API (PRD2 §13).
+// real API. The stub path triggers when there's no key, OUTLINE_STUB=true, or
+// FIRESTORE_EMULATOR_HOST is set (i.e. running against the emulator).
 const mockOpenAi = (create: () => unknown) => ({
   default: class {
     chat = { completions: { create } }
@@ -96,7 +99,7 @@ describe('generateOutline', () => {
   }
 
   beforeEach(() => {
-    delete process.env.FUNCTIONS_EMULATOR
+    delete process.env.FIRESTORE_EMULATOR_HOST
     delete process.env.OUTLINE_STUB
     vi.resetModules()
   })
@@ -107,7 +110,7 @@ describe('generateOutline', () => {
   })
 
   it('returns a deterministic stub when no API key is present', async () => {
-    const { generateOutline } = await import('../src/openai')
+    const { generateOutline } = await import('../../api/_lib/openai')
     const res = await generateOutline(input, undefined)
     expect(res.model).toBe('stub')
     expect(res.usedFallback).toBe(false)
@@ -117,9 +120,9 @@ describe('generateOutline', () => {
     expect(res.answerKey.length).toBe(res.outline.quiz.length)
   })
 
-  it('returns a stub under the emulator even with a key', async () => {
-    process.env.FUNCTIONS_EMULATOR = 'true'
-    const { generateOutline } = await import('../src/openai')
+  it('returns a stub against the emulator even with a key', async () => {
+    process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080'
+    const { generateOutline } = await import('../../api/_lib/openai')
     const res = await generateOutline(input, 'sk-test')
     expect(res.model).toBe('stub')
   })
@@ -135,7 +138,7 @@ describe('generateOutline', () => {
     vi.doMock('openai', () =>
       mockOpenAi(async () => ({ choices: [{ message: { content: validJson } }] })),
     )
-    const { generateOutline } = await import('../src/openai')
+    const { generateOutline } = await import('../../api/_lib/openai')
     const res = await generateOutline(input, 'sk-real-key')
     expect(res.usedFallback).toBe(false)
     expect(res.outline.warmUp).toBe('w')
@@ -164,7 +167,7 @@ describe('generateOutline', () => {
     vi.doMock('openai', () =>
       mockOpenAi(async () => ({ choices: [{ message: { content: validJson } }] })),
     )
-    const { generateOutline } = await import('../src/openai')
+    const { generateOutline } = await import('../../api/_lib/openai')
     const res = await generateOutline(input, 'sk-real-key')
     expect(res.outline.quiz[0]).toEqual({ lessonId: 'long-run', question: 'qq?', options: ['a', 'b', 'c', 'd'] })
     // The answer must NOT leak into the public outline.
@@ -178,7 +181,7 @@ describe('generateOutline', () => {
         throw new Error('boom')
       }),
     )
-    const { generateOutline } = await import('../src/openai')
+    const { generateOutline } = await import('../../api/_lib/openai')
     const res = await generateOutline(input, 'sk-real-key')
     expect(res.usedFallback).toBe(true)
     expect(res.outline.agenda.length).toBeGreaterThan(0)
@@ -188,7 +191,7 @@ describe('generateOutline', () => {
     vi.doMock('openai', () =>
       mockOpenAi(async () => ({ choices: [{ message: { content: 'not json' } }] })),
     )
-    const { generateOutline } = await import('../src/openai')
+    const { generateOutline } = await import('../../api/_lib/openai')
     const res = await generateOutline(input, 'sk-real-key')
     expect(res.usedFallback).toBe(true)
   })

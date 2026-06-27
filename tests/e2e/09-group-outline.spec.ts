@@ -26,7 +26,7 @@ async function joinGroup(page: Page): Promise<void> {
 // PRD2 §13 scenario 3: a member generates a meeting outline (AI mocked) and it
 // renders; a second member sees the same cached outline without regenerating.
 test('outline generates once and is cached for the whole cohort', async ({ browser }) => {
-  test.slow() // first assignCohort call may cold-start the functions emulator
+  test.slow() // first /api call may cold-load the serverless handler in the dev server
   const ctxA = await browser.newContext()
   const pageA = await ctxA.newPage()
   await signUpIn(pageA, 'Ada')

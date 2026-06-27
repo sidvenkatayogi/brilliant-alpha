@@ -5,8 +5,8 @@
 // writes a handful of recall questions grounded in the lessons the group did.
 
 import OpenAI from 'openai'
-import type { AiOutline, LessonMetaLite, QuizAnswer } from './shared/types'
-import { fallbackOutline, generateQuiz, parseOutline, splitOutline } from './shared/outline'
+import type { AiOutline, LessonMetaLite, QuizAnswer } from './types'
+import { fallbackOutline, generateQuiz, parseOutline, splitOutline } from './outline'
 
 // One-line swap for cost/quality. gpt-4o-mini = cheap + JSON mode; gpt-4o richer.
 export const OUTLINE_MODEL = 'gpt-4o-mini'
@@ -65,9 +65,9 @@ export async function generateOutline(
   input: OutlineInput,
   apiKey: string | undefined,
 ): Promise<{ outline: AiOutline; answerKey: QuizAnswer[]; usedFallback: boolean; model: string }> {
-  // Emulator / no-secret path: deterministic stub so tests + local runs never
-  // hit the real API (PRD2 §13 — CI never calls the model).
-  if (!apiKey || process.env.FUNCTIONS_EMULATOR === 'true' || process.env.OUTLINE_STUB === 'true') {
+  // No-key / local-emulator / explicit-stub path: deterministic stub so tests
+  // and local runs never hit the real API.
+  if (!apiKey || process.env.OUTLINE_STUB === 'true' || !!process.env.FIRESTORE_EMULATOR_HOST) {
     const { outline, answerKey } = splitOutline(stubOutline(input))
     return { outline, answerKey, usedFallback: false, model: 'stub' }
   }
@@ -103,7 +103,7 @@ export async function generateOutline(
   }
 }
 
-/** A deterministic, clearly-labelled stub used under the emulator and in tests. */
+/** A deterministic, clearly-labelled stub used locally and in tests. */
 function stubOutline(input: OutlineInput) {
   const base = fallbackOutline(input.completed)
   return {

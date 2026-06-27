@@ -1,7 +1,7 @@
-// DUPLICATE of src/cohort/outline.ts (parse/fallback) — keep in sync.
-// The outline now carries a short multiple-choice quiz. The MODEL/fallback emit
-// a RawOutline whose quiz items include the answer; `splitOutline` separates the
-// public outline (questions only) from the private answer key.
+// Defensive parse + static fallback for the AI meeting outline, plus the quiz
+// helpers. The MODEL/fallback emit a RawOutline whose quiz items include the
+// answer; `splitOutline` separates the public outline (questions only) from the
+// private answer key. Mirror of the client copy in src/cohort/outline.ts.
 
 import type {
   AiOutline,

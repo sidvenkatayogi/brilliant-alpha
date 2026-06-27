@@ -1,9 +1,9 @@
-// Static lesson metadata, copied from src/content/lessons/*.json. The function
-// needs titles / conceptSummary / realWorldHook as the substrate for the AI
-// outline, without importing the whole client content bundle. Keep in sync with
-// the lesson JSON (ids + the three text fields below).
+// Static lesson metadata, copied from src/content/lessons/*.json. The API needs
+// titles / conceptSummary / realWorldHook as the substrate for the AI outline,
+// without importing the whole client content bundle. Keep in sync with the
+// lesson JSON (ids + the three text fields below).
 
-import type { LessonMetaLite } from './shared/types'
+import type { LessonMetaLite } from './types'
 
 export const LESSON_META: LessonMetaLite[] = [
   {
