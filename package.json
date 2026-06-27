@@ -15,6 +15,7 @@
     "emulators": "firebase emulators:start --only auth,firestore --project demo-long-run",
     "dev:test": "vite --mode test",
     "seed:demo": "node scripts/seed-demo.cjs",
+    "seed:prod": "SEED_PROD=1 node scripts/seed-demo.cjs",
     "deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {

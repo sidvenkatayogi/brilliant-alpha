@@ -1,24 +1,54 @@
 /* eslint-disable */
-// Seeds the local Emulator Suite with a ready-made demo: a login account already
+// Seeds a ready-made demo: a login account (demo@longrun.app / demo1234) already
 // in a cohort, three dummy members at various points in the course, and their
 // filled availability — but the login account's OWN availability left empty so
 // you can demo adding it and watching the overlap update.
 //
+// EMULATOR (default):
 //   1) npm run emulators           (in one terminal — starts auth + firestore)
 //   2) npm run seed:demo           (in another terminal — runs this script)
 //   3) npm run dev:test            (open http://localhost:5173 and log in)
+//   Emulator data is in-memory, so it resets when you restart the emulators.
 //
-// Re-run any time to reset the demo data. Emulator data is in-memory, so it also
-// resets when you restart the emulators.
+// PRODUCTION (writes to your real Firebase project — for the deployed app):
+//   Use the service account you created for Vercel. Either:
+//     GOOGLE_APPLICATION_CREDENTIALS=./serviceAccount.json npm run seed:prod
+//   or set FIREBASE_PROJECT_ID / FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY,
+//   then: npm run seed:prod
+//   NOTE: this creates a REAL login (demo@longrun.app / demo1234) in production
+//   Auth and writes the demo cohort to your live Firestore. Re-run to refresh.
 
 const admin = require('firebase-admin')
 
-// Point the Admin SDK at the running emulators.
-process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
-process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
+const SEED_PROD = !!process.env.SEED_PROD
 
-const PROJECT_ID = 'demo-long-run'
-admin.initializeApp({ projectId: PROJECT_ID })
+if (SEED_PROD) {
+  // Production: authenticate with a service account (never the emulator).
+  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      }),
+    })
+  } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    // Picks up the key file path from the standard env var.
+    admin.initializeApp({ credential: admin.credential.applicationDefault() })
+  } else {
+    console.error(
+      'seed:prod needs service-account credentials. Set GOOGLE_APPLICATION_CREDENTIALS=./serviceAccount.json,\n' +
+        'or FIREBASE_PROJECT_ID / FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY.',
+    )
+    process.exit(1)
+  }
+} else {
+  // Point the Admin SDK at the running emulators.
+  process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
+  process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
+  admin.initializeApp({ projectId: 'demo-long-run' })
+}
+
 const db = admin.firestore()
 const auth = admin.auth()
 
@@ -227,8 +257,12 @@ async function main() {
     })
   }
 
-  console.log('\n✅ Demo data seeded into the emulators.\n')
-  console.log('   Log in at http://localhost:5173 with:')
+  console.log(
+    SEED_PROD
+      ? '\n✅ Demo data seeded into PRODUCTION Firestore.\n'
+      : '\n✅ Demo data seeded into the emulators.\n',
+  )
+  console.log(SEED_PROD ? '   Log in to the deployed app with:' : '   Log in at http://localhost:5173 with:')
   console.log(`      email:    ${LOGIN.email}`)
   console.log(`      password: ${LOGIN.password}\n`)
   console.log(`   Cohort:  The Lucky Priors  (members: Maya + Ada, Bo, Chen)`)
