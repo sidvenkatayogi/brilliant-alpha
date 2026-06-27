@@ -9,7 +9,7 @@ import type {
   LessonMetaLite,
   QuizAnswer,
   RawOutline,
-} from './types'
+} from './types.js'
 
 function stripFences(raw: string): string {
   let s = raw.trim()

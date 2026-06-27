@@ -3,7 +3,7 @@
 // without importing the whole client content bundle. Keep in sync with the
 // lesson JSON (ids + the three text fields below).
 
-import type { LessonMetaLite } from './types'
+import type { LessonMetaLite } from './types.js'
 
 export const LESSON_META: LessonMetaLite[] = [
   {

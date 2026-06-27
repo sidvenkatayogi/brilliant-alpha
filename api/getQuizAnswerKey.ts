@@ -3,9 +3,9 @@
 // cannot read. Ported from the old getQuizAnswerKey Cloud Function.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { db, requireUid } from './_lib/admin'
-import { run, ApiError } from './_lib/http'
-import type { QuizAnswer } from './_lib/types'
+import { db, requireUid } from './_lib/admin.js'
+import { run, ApiError } from './_lib/http.js'
+import type { QuizAnswer } from './_lib/types.js'
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   return run(req, res, async () => {

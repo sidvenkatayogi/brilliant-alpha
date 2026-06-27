@@ -9,7 +9,7 @@ import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getAuth } from 'firebase-admin/auth'
 import type { VercelRequest } from '@vercel/node'
-import { ApiError } from './http'
+import { ApiError } from './http.js'
 
 function ensureApp(): void {
   if (getApps().length) return

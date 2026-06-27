@@ -2,11 +2,11 @@
 // make one (transactional). Ported from the old assignCohort Cloud Function.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { db, FieldValue, requireUid } from './_lib/admin'
-import { run, ApiError } from './_lib/http'
-import { levelBand } from './_lib/levelBand'
-import { cohortName } from './_lib/cohortName'
-import { chooseExistingCohort, type CohortCandidate } from './_lib/cohortMatch'
+import { db, FieldValue, requireUid } from './_lib/admin.js'
+import { run, ApiError } from './_lib/http.js'
+import { levelBand } from './_lib/levelBand.js'
+import { cohortName } from './_lib/cohortName.js'
+import { chooseExistingCohort, type CohortCandidate } from './_lib/cohortMatch.js'
 
 const MAX_COHORT_SIZE = 6
 

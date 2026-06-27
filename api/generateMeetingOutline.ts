@@ -4,11 +4,11 @@
 // Ported from the old generateMeetingOutline Cloud Function.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { db, requireUid } from './_lib/admin'
-import { run, ApiError } from './_lib/http'
-import type { AiOutline, LessonMetaLite } from './_lib/types'
-import { LESSON_META_BY_ID } from './_lib/lessonMeta'
-import { generateOutline } from './_lib/openai'
+import { db, requireUid } from './_lib/admin.js'
+import { run, ApiError } from './_lib/http.js'
+import type { AiOutline, LessonMetaLite } from './_lib/types.js'
+import { LESSON_META_BY_ID } from './_lib/lessonMeta.js'
+import { generateOutline } from './_lib/openai.js'
 
 // Only regenerate an outline at most this often per meeting (PRD2 §6.4).
 const REGEN_COOLDOWN_MS = 3 * 60 * 1000

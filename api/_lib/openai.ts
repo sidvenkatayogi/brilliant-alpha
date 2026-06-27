@@ -5,8 +5,8 @@
 // writes a handful of recall questions grounded in the lessons the group did.
 
 import OpenAI from 'openai'
-import type { AiOutline, LessonMetaLite, QuizAnswer } from './types'
-import { fallbackOutline, generateQuiz, parseOutline, splitOutline } from './outline'
+import type { AiOutline, LessonMetaLite, QuizAnswer } from './types.js'
+import { fallbackOutline, generateQuiz, parseOutline, splitOutline } from './outline.js'
 
 // One-line swap for cost/quality. gpt-4o-mini = cheap + JSON mode; gpt-4o richer.
 export const OUTLINE_MODEL = 'gpt-4o-mini'
