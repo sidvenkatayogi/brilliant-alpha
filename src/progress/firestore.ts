@@ -78,3 +78,10 @@ export async function saveLessonProgress(
 ): Promise<void> {
   await setDoc(progressRef(uid, progress.lessonId), progress, { merge: true })
 }
+
+export async function updateEmailPrefs(
+  uid: string,
+  prefs: { dailyQuiz: boolean },
+): Promise<void> {
+  await setDoc(doc(db, 'users', uid), { emailPrefs: prefs }, { merge: true })
+}
