@@ -280,6 +280,55 @@ const DISTRACTORS = [
   'Rare events can be ignored because they essentially never happen.',
   'Knowing extra information can never change a probability.',
 ]
+
+const STOPWORDS = new Set([
+  'a','an','the','is','are','was','were','be','in','on','at','to',
+  'of','and','or','but','it','its','this','that','for','with','by','as','not','can',
+  'never','once','only','you','your','i','we','they','one','two','three','all','any','no'
+])
+
+function normalize(s: string): Set<string> {
+  return new Set(
+    s.toLowerCase().replace(/[^a-z0-9\-\s]/g, ' ').split(/\s+/)
+      .filter(t => t.length > 0 && !STOPWORDS.has(t)),
+  )
+}
+
+function sim(a: string, b: string): number {
+  const A = normalize(a), B = normalize(b)
+  const minSize = Math.min(A.size, B.size)
+  if (minSize === 0) return 0
+  let overlap = 0
+  for (const t of A) if (B.has(t)) overlap++
+  return overlap / minSize
+}
+
+export const CONCEPT_MIN = 0.25
+export const TIE_MARGIN  = 0.15
+
+function deterministicExplanation(l: LessonMetaLite): string {
+  return `"${l.title}": ${l.conceptSummary} (e.g. ${l.realWorldHook})`
+}
+
+export function buildDeterministicItem(l: LessonMetaLite, i: number): FullQuizQuestion {
+  const correct = l.conceptSummary
+  const distractors = [
+    DISTRACTORS[i % DISTRACTORS.length],
+    DISTRACTORS[(i + 1) % DISTRACTORS.length],
+    DISTRACTORS[(i + 2) % DISTRACTORS.length],
+  ]
+  const answerIndex = i % 4
+  const options = [...distractors]
+  options.splice(answerIndex, 0, correct)
+  return {
+    lessonId: l.id,
+    question: `Which statement best captures the core idea of "${l.title}"?`,
+    options,
+    answerIndex,
+    explanation: deterministicExplanation(l),
+  }
+}
+
 export function generateQuiz(completed: LessonMetaLite[]): FullQuizQuestion[] {
   const lessons = completed.slice(0, 5)
   if (lessons.length === 0) {
@@ -299,24 +348,91 @@ export function generateQuiz(completed: LessonMetaLite[]): FullQuizQuestion[] {
       },
     ]
   }
-  return lessons.map((l, i) => {
-    const correct = l.conceptSummary
-    const distractors = [
-      DISTRACTORS[i % DISTRACTORS.length],
-      DISTRACTORS[(i + 1) % DISTRACTORS.length],
-      DISTRACTORS[(i + 2) % DISTRACTORS.length],
-    ]
-    const answerIndex = i % 4
-    const options = [...distractors]
-    options.splice(answerIndex, 0, correct)
-    return {
-      lessonId: l.id,
-      question: `Which statement best captures the core idea of "${l.title}"?`,
-      options,
-      answerIndex,
-      explanation: `"${l.title}": ${l.conceptSummary} (e.g. ${l.realWorldHook})`,
+  return lessons.map((l, i) => buildDeterministicItem(l, i))
+}
+
+export function verifyQuiz(
+  quiz: FullQuizQuestion[],
+  completed: LessonMetaLite[],
+): { items: FullQuizQuestion[]; repaired: number; replaced: number } {
+  let repaired = 0
+  let replaced = 0
+  const items = quiz.map((item, i) => {
+    try {
+      // --- Structural gate ---
+      const lessonInMeta = !!LESSON_META_BY_ID[item.lessonId]
+      const lessonInCompleted = completed.some(l => l.id === item.lessonId)
+      const distinctOptions = item.options.map(o => o.trim())
+      const optionsUnique = new Set(distinctOptions).size === distinctOptions.length
+
+      if (
+        item.options.length !== 4 ||
+        !optionsUnique ||
+        !Number.isInteger(item.answerIndex) ||
+        item.answerIndex < 0 ||
+        item.answerIndex >= 4 ||
+        !lessonInMeta ||
+        !lessonInCompleted
+      ) {
+        replaced++
+        // REPLACE lesson selection
+        if (completed.length === 0) {
+          return generateQuiz([])[0]
+        }
+        const replaceLessonId = item.lessonId
+        const lessonForReplace = (lessonInMeta && lessonInCompleted)
+          ? LESSON_META_BY_ID[replaceLessonId]
+          : completed[i % completed.length]
+        return buildDeterministicItem(lessonForReplace, i)
+      }
+
+      // --- Concept match ---
+      const L = LESSON_META_BY_ID[item.lessonId]
+      const scores = item.options.map(opt => ({
+        conceptScore: sim(opt, L.conceptSummary),
+        misconScore: Math.max(...DISTRACTORS.map(d => sim(opt, d))),
+      }))
+
+      // Sort by conceptScore descending
+      const ranked = scores.map((s, idx) => ({ idx, ...s })).sort((a, b) => b.conceptScore - a.conceptScore)
+      const best = ranked[0]
+      const runnerUp = ranked[1]
+
+      // REPLACE conditions
+      if (
+        best.conceptScore < CONCEPT_MIN ||
+        best.conceptScore - runnerUp.conceptScore < TIE_MARGIN ||
+        best.conceptScore <= best.misconScore
+      ) {
+        replaced++
+        // lessonId is in completed (passed structural gate), so use LESSON_META_BY_ID[item.lessonId]
+        return buildDeterministicItem(L, i)
+      }
+
+      const conceptIdx = best.idx
+
+      // PASS
+      if (item.answerIndex === conceptIdx) {
+        return item
+      }
+
+      // REPAIR
+      repaired++
+      return {
+        ...item,
+        answerIndex: conceptIdx,
+        explanation: deterministicExplanation(L),
+      }
+    } catch {
+      // Any throw → REPLACE
+      replaced++
+      if (completed.length === 0) {
+        return generateQuiz([])[0]
+      }
+      return buildDeterministicItem(completed[i % completed.length], i)
     }
   })
+  return { items, repaired, replaced }
 }
 export function fallbackOutline(completedLessons: LessonMetaLite[]): RawOutline {
   const lessons = completedLessons.length > 0 ? completedLessons : []
@@ -421,6 +537,9 @@ export async function generateOutline(
     const parsed = parseOutline(text)
     if (parsed) {
       if (!parsed.quiz || parsed.quiz.length === 0) parsed.quiz = generateQuiz(input.completed)
+      const { items, repaired, replaced } = verifyQuiz(parsed.quiz, input.completed)
+      parsed.quiz = items
+      if (repaired + replaced > 0) console.warn(`[verifyQuiz] repaired=${repaired} replaced=${replaced}`)
       const { outline, answerKey } = splitOutline(parsed)
       return { outline, answerKey, usedFallback: false, model: OUTLINE_MODEL }
     }

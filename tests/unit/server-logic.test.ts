@@ -151,6 +151,15 @@ describe('generateOutline', () => {
   })
 
   it('keeps a model-provided quiz and splits out its answers', async () => {
+    // Use realistic options that will PASS verifyQuiz:
+    // conceptSummary at index 0, 3 real distractors at 1-3.
+    const longRunConcept = 'Probability is long-run relative frequency: unpredictable one at a time, predictable in bulk.'
+    const realisticOptions = [
+      longRunConcept,
+      'Probability only applies to fair coins and dice, never to real life.',
+      'Once an outcome is "due," it becomes more likely on the next try.',
+      'A single sample tells you the true long-run rate exactly.',
+    ]
     const validJson = JSON.stringify({
       warmUp: 'w',
       agenda: [{ title: 't', minutes: 10, facilitatorNote: 'n' }],
@@ -159,9 +168,9 @@ describe('generateOutline', () => {
         {
           lessonId: 'long-run',
           question: 'qq?',
-          options: ['a', 'b', 'c', 'd'],
-          answerIndex: 2,
-          explanation: 'because c',
+          options: realisticOptions,
+          answerIndex: 0,
+          explanation: 'because long-run frequency',
         },
       ],
       peerTeachingActivity: 'p',
@@ -172,10 +181,14 @@ describe('generateOutline', () => {
     )
     const { generateOutline } = await import('../../api/cohort')
     const res = await generateOutline(input, 'sk-real-key')
-    expect(res.outline.quiz[0]).toEqual({ lessonId: 'long-run', question: 'qq?', options: ['a', 'b', 'c', 'd'] })
+    // The question and options survive into the public outline.
+    expect(res.outline.quiz[0].lessonId).toBe('long-run')
+    expect(res.outline.quiz[0].question).toBe('qq?')
+    expect(res.outline.quiz[0].options).toEqual(realisticOptions)
     // The answer must NOT leak into the public outline.
     expect(res.outline.quiz[0]).not.toHaveProperty('answerIndex')
-    expect(res.answerKey[0]).toEqual({ answerIndex: 2, explanation: 'because c' })
+    // The answer key must have the correct answerIndex pointing at the conceptSummary.
+    expect(res.answerKey[0].answerIndex).toBe(0)
   })
 
   it('falls back to the authored template on an API error', async () => {

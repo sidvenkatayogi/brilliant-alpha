@@ -80,9 +80,9 @@
 
 ### Peer pressure is a great way to motivate adults to learn.
 
-### You need to invade an adult student's mind with learning, because you can't leave it them to open your learning website.
+### You need to invade an adult student's mind with learning, because they're too lazy to open a learning website.
 
-### When students have no knowledge on a subject, is the perfect time to ask questions on that subject.
+### When students have no knowledge on a subject, is the perfect time to ask questions on it.
 
 ### Mature adults need child sized instruction.
 
@@ -168,6 +168,16 @@
       - **Link to source:** IES / What Works Clearinghouse (ies.ed.gov), 2007.
    - **Supporting source (spacing dose):** Cepeda et al. meta-analyses — optimal gap ≈ 20% of the retention interval at a few weeks, falling to ≈ 5% at one year.
 
+- **Subcategory 2.5 — The pretesting effect (guessing before instruction)**
+   - **Source:** Synthesis essay, *Redesigning Self-Directed STEM Learning* (2026); underlying pretesting research (e.g., Richland, Kornell & Bjork, 2009; Kornell, Hays & Bjork, 2009 — *Unsuccessful retrieval attempts enhance subsequent learning*).
+      - **DOK 1 – Facts:**
+         - Attempting to answer questions about not-yet-learned material — and failing — improves long-term retention of that material once it is taught, relative to spending the same time studying it.
+         - The effect holds even though initial guesses are almost universally wrong (demonstrated with weakly-associated word pairs and complex science essays).
+         - Proposed mechanisms: attention direction (the question primes the brain to search subsequent instruction for the answer), activation of related semantic networks (a framework the new info attaches to), and prediction-error learning (corrective feedback updates internal models, deepening encoding).
+         - Boundary conditions / tension: benefit is contingent on the attempt being brief, low-stakes, and immediately followed by corrective instruction. The IES Practice Guide (see 2.4) graded pre-questions as *Low* evidence, so this is a promising but not strongly-graded lever.
+      - **DOK 2 – Summary:** Guessing before instruction primes encoding, but only when calibrated: short, no-stakes (no reward or penalty for accuracy), and immediately resolved with the explanation. If a learner dwells too long on an unanswerable prequestion, the same mechanism flips into working-memory depletion and the risk of encoding wrong schemas.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis); pretesting literature via Google Scholar.
+
 ### Category 3: Knowledge & Thinking
 
 - **Subcategory 3.1 — Why critical thinking resists content-free teaching**
@@ -213,6 +223,16 @@
          - Magnitude: poorer pupils gain ~1.5 years' learning with very effective teachers vs ~0.5 years with poorly performing ones.
       - **DOK 2 – Summary:** The two best-evidenced components of great teaching are content knowledge and quality of instruction. Measurement each has limits and should be triangulated, not used as a single gauge.
       - **Link to source:** Sutton Trust / Evidence Based Education (2014).
+
+- **Subcategory 5.3 — Microlearning as cognitive scaffolding**
+   - **Source:** Synthesis essay, *Redesigning Self-Directed STEM Learning* (2026); built on Cognitive Load Theory (Sweller) and Rosenshine's *Principles of Instruction*.
+      - **DOK 1 – Facts:**
+         - Microlearning segments material into focused units that often take fewer than five minutes, each targeting a single learning objective.
+         - The rationale is structural (working-memory limits), not merely a concession to short attention spans; single-objective units minimize extraneous load and direct all processing capacity toward schema acquisition.
+         - Aligns with master-teaching mechanics: present new material in very small steps followed immediately by guided practice; introduce greater complexity and less guidance only as expertise grows (expertise-reversal).
+         - Bite-sized, mobile-formatted units also lower the friction of initiating a session (relevant to behavioral mechanics in Category 8).
+      - **DOK 2 – Summary:** For novices — including mature adults learning an unfamiliar domain — bite-sized, single-objective units are a working-memory necessity, not "going easy." Expand step size and strip scaffolds only once foundational schemas are in place.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis).
 
 ### Category 6: Business & Product
 
@@ -270,5 +290,50 @@
             - Learning and performance are not the same - engagement is a poor proxy indicator of learning
             - Vague instruction means vague understanding- the order your curriculum is in is important (cumulative)
         - **DOK 2 – Summary:** Struggle is good for students because that's where the learning happens. At the same time, struggling in the wrong places can lead to work spent inefficiently. Give students structure to critically think through problems. Encourage the user with achievement, not to achievement. Make sure your curriculum is well thought through.
+
+### Category 8: Behavioral Design & Habit Formation (the "how to get them to show up")
+
+- **Subcategory 8.1 — The Fogg Behavior Model (B = MAP)**
+   - **Source:** B. J. Fogg, *Tiny Habits* / Stanford Behavior Design Lab; via synthesis essay *Redesigning Self-Directed STEM Learning* (2026).
+      - **DOK 1 – Facts:**
+         - A target behavior (B) occurs only when Motivation (M), Ability (A), and a Prompt (P) converge at the same moment.
+         - For a depleted adult at the end of a workday, motivation to start a demanding STEM session is low and highly variable.
+         - When motivation is low, the reliable lever is to raise *ability* by reducing friction toward zero (e.g., a ~2-minute, mobile-formatted microlesson that sits above the "action line").
+         - Even with high ability and baseline motivation, no behavior fires without a precisely timed prompt — the platform cannot wait passively for the user to remember it exists.
+      - **DOK 2 – Summary:** Don't optimize the wrong variable. For time-poor adults, motivation is unreliable; drive the behavior by collapsing friction (a genuinely tiny lesson) and supplying a well-timed prompt so a session can start even when willpower is absent.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis); Fogg Behavior Design Lab.
+
+- **Subcategory 8.2 — Prompts and the habit loop (ambient vs. interruption-based cues)**
+   - **Source:** Synthesis essay *Redesigning Self-Directed STEM Learning* (2026); habit-loop framing (cue → routine → reward).
+      - **DOK 1 – Facts:**
+         - Interruption-based prompts (push notifications) force a context switch and impose an "interruption tax"; habitual overuse produces notification fatigue and, eventually, app deletion.
+         - Push works mainly as a *signal* for users already motivated and able; it is poor for low-motivation states.
+         - Ambient prompts (e.g., lock-screen widgets) embed the cue in an environment the user already glances at dozens of times daily, bypassing the interruption tax and acting as a persistent habit cue.
+         - Habits are encoded as cue → routine → reward; pairing an ambient cue with a frictionless microlesson (routine) and an immediate sense of competence/visible progress (reward) can automate engagement and reduce reliance on executive function.
+      - **DOK 2 – Summary:** Low-friction, ambient cues build durable daily habits better than interruptive push spam (which decays into uninstalls). Pair a persistent, low-friction cue with a tiny routine and an immediate competence reward so consistent exposure to spaced retrieval happens without willpower. (Note the UX/ethics tradeoff: the same tactics, overused, erode trust — restraint is itself a design lever.)
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis).
+
+### Category 9: Social Motivation & Signaling (the outside-world lever)
+
+- **Subcategory 9.1 — Cohort accountability vs. self-paced isolation**
+   - **Source:** Synthesis essay *Redesigning Self-Directed STEM Learning* (2026); SDT "relatedness" (Deci & Ryan); industry completion-rate analyses.
+      - **DOK 1 – Facts:**
+         - Self-paced MOOCs report roughly 3%–12.6% completion; general self-paced courses ~10%–20%.
+         - Scheduled cohorts with no live interaction report ~64%; highly interactive cohort-based courses ~85%–96%.
+         - Mechanism: SDT's *relatedness* plus social accountability — visible peer progress and shared deadlines create external accountability that counters indefinite procrastination.
+         - Caveat: cohort completion figures frequently come from industry/marketing sources rather than RCTs, and self-selection (people who pay for and commit to cohorts differ from free self-paced users) likely inflates the apparent gap. Treat exact percentages as directional, not precise.
+      - **DOK 2 – Summary:** Social accountability and visible peer progress are associated with far higher completion than isolated self-paced study. A self-directed platform can *simulate* the cohort effect with asynchronous social proof, peer-progress markers, shared time-boxed tracks, and leaderboards — making the absence of peers feel costly. Hold the headline percentages loosely.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis).
+
+- **Subcategory 9.2 — Education as signaling; micro-credentials**
+   - **Source:** Bryan Caplan, Signaling Theory (*The Case Against Education*, 2018); via synthesis essay *Redesigning Self-Directed STEM Learning* (2026).
+      - **DOK 1 – Facts:**
+         - Signaling theory holds that a large share of education's wage premium reflects *signaling* — reliably advertising intelligence, conscientiousness, and conformity — rather than human capital (skills actually acquired).
+         - Caplan's high-end estimate attributes up to ~80% of the financial return to signaling; this figure is contested and sits at the upper bound of the debate.
+         - Adults pursue learning partly for prestige, status, and career advancement, not solely self-edification — they want to *broadcast* achievement.
+         - Shareable, metadata-rich micro-credentials / digital badges (exportable to professional networks like LinkedIn) convert private cognitive effort into liquid public/professional capital.
+         - Strategic gap: a platform with no recognizable way to broadcast a completed achievement suppresses one of its strongest adult motivators.
+      - **DOK 2 – Summary:** Adult learning carries large signaling value; verified, shareable micro-credentials let learners project competence to peers and employers, tying intrinsic curiosity to extrinsic professional reward and directly addressing Brilliant's "disconnected from the outside world" gap. Caplan's ~80% figure is contested and should be cited as an upper-bound claim, not consensus.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis); Caplan, *The Case Against Education* (2018).
 
 ---

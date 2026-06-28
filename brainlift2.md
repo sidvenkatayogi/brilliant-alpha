@@ -1,169 +1,89 @@
-# BrainLift — The Science of Durable Learning (and What It Demands of AI-Driven Education)
+### Owners
 
-> A BrainLift is structured context for AI conversations. This one distills ten foundational education-research papers into a defensible knowledge base, a set of original insights, and a handful of strong, contrarian points of view — so any AI grounded in this document optimizes for *durable learning*, not momentary performance.
-
----
-
-## Owners
-
-- **[Your name / handle here]** — primary author & maintainer
-- *Note for maintainers:* The Knowledge Tree (DOK 2) and Experts sections are the stable foundation; the Insights (DOK 3) and Spiky POVs (DOK 4) are the part that should keep evolving as you read more and pressure-test these claims against real outcome data.
-
----
-
-## Purpose
+- Siddhartha Venkatayogi siddhartha.venkatayogi@alphaaiengineering.com
 
 ### Purpose
 
-The purpose of this BrainLift is to establish an **evidence-grounded model of how durable learning actually happens**, and to use that model to stress-test **AI-driven, mastery-based education systems** — the kind built around an "explicit lesson → mastery quiz → spaced review → coach" loop.
-
-The North Star is a single discipline: **separate the mechanisms the science strongly endorses from the metrics and marketing claims it warns against.** The literature gives a remarkably coherent prescription — guide novices explicitly, then force effortful, spaced retrieval — but it also exposes a trap: the metrics that are easiest to capture in real time (accuracy, fluency, speed, confidence, engagement) are precisely the ones that mislead about whether learning lasts. Any AI conversation grounded in this BrainLift should reason from that tension, not around it.
+- The purpose of this BrainLift is to develop a research-grounded point of view on how people achieve genuine long-term learning and sustained motivation. It is built on the belief that effective learning experiences should be designed around the science of how people actually learn and stay motivated — not around engagement metrics or the surface appearance of rigor — and that carefully sequenced, bite-sized instruction grounded in retrieval, spacing, and desirable difficulties produces better outcomes than dense, performance-optimized approaches.
 
 ### In Scope
 
-- The cognitive architecture of learning: working memory limits, long-term memory, and schemas.
-- The best-evidenced levers: retrieval practice, spaced/distributed practice, worked examples, explicit instruction.
-- The **learning-versus-performance** distinction and its consequences for dashboards and "mastery" gates.
-- The role of domain knowledge as the substrate of higher-order thinking.
-- What great teaching/coaching consists of, ranked by strength of evidence.
-- Design implications for AI-mediated, mastery-gated learning systems.
+- The cognitive and motivational science of learning: cognitive load, retrieval practice, spacing, interleaving, desirable difficulties, productive failure, and the learning-vs-performance distinction.
+- Motivation theory: intrinsic motivation, Self-Determination Theory, and the achievement→motivation relationship.
+- How these principles inform the design of instruction and learning experiences: lesson structure, prequestions, feedback loops, achievements, and difficulty scaffolding.
+- Generating original insights (DOK 3) and Spiky POVs (DOK 4) about how to design for genuine long-term learning.
 
 ### Out of Scope
 
-- Reviewing or endorsing any specific vendor's *headline outcome multipliers* (e.g., "2.6x growth," "100% of students score top marks"). These are treated here only as examples of the *kind of metric the science cautions against over-reading*, not as validated facts.
-- Learning-styles theory, "brain-based" pedagogy fads, and other claims the cited researchers have flagged as unsupported.
-- A full meta-analysis or systematic review — this BrainLift curates and synthesizes ten anchor papers, it does not re-derive the field.
-- Engagement, gamification, and motivation mechanics as ends in themselves (they appear only where they intersect with durable learning).
-
----
-
-## DOK 4: Spiky Points of View (SPOVs)
-
-> Strong, defensible, somewhat contrarian stances built by overlapping the DOK 3 Insights below. These are the claims a generic model is unlikely to assert with conviction.
-
-- **SPOV 1 — The dashboard is the disease. Most AI-education products optimize the one variable the science says is a mirage.**
-   - **Elaboration:** A mastery gate set at "90% on first pass" measures *performance* — temporary, observable accuracy during acquisition — which Soderstrom & Bjork show is "often an unreliable index" of *learning* (durable retention and transfer). An AI that rewards visible progress, speed, and confidence is structurally pulled toward massed, blocked, cue-rich practice: the exact conditions that inflate short-term scores while building little storage strength. The fix is not a better dashboard but a different *unit of measurement*: mastery should be defined as **delayed, interleaved re-demonstration**, weeks later, on novel surface structures — not first-pass accuracy. Until a system instruments retention-at-a-lag and transfer, its core metric is optimizing for the illusion of learning. This is spiky because the entire category sells on real-time dashboards and "watch them improve" narratives.
-
-- **SPOV 2 — "Self-directed, personalized learning" is a reward for expertise, not a method for producing it.**
-   - **Elaboration:** The dominant edtech vision celebrates personalized, AI-driven, self-directed journeys. But Kirschner, Sweller & Clark show that minimally guided instruction *fails for novices* because unguided search overwhelms working memory and builds no schema. Guidance can only be relaxed as prior knowledge grows — the **expertise-reversal effect**. So self-direction is downstream of competence, not a route to it. The correct AI design is therefore *adaptive guidance that fades*: heavy worked-example scaffolding early, withdrawn precisely as a learner's schema matures. A platform that hands novices autonomy in the name of "personalization" is administering the right medicine at the wrong dose — and calling a bug a feature.
-
-- **SPOV 3 — You cannot offload knowledge to AI and keep the thinking. "Critical thinking" is domain knowledge wearing a costume.**
-   - **Elaboration:** Willingham demonstrates that critical thinking is not a transferable, content-free skill; people reason about a problem's *deep structure* only when they have deep, practiced familiarity with the domain (only ~19% spontaneously transferred a solution to a structurally identical problem). Coe et al. independently rank teachers' content knowledge as the attribute with the strongest evidence of impact. The implication cuts hard against the fashionable claim that, because AI can retrieve facts, students no longer need to hold knowledge in their heads. The opposite is true: thinking *is* knowledge-dependent, so a knowledge-rich curriculum is the precondition for the very higher-order skills everyone wants. Every hour spent on a standalone "21st-century skills" module is an hour not spent building the knowledge those skills run on.
-
-- **SPOV 4 — Good learning is supposed to feel bad, which makes student (and AI) satisfaction a dangerous compass.**
-   - **Elaboration:** Bjork & Bjork's "desirable difficulties" — spacing, interleaving, generation/testing, varied practice — *depress* visible progress and *feel* less effective, yet roughly triple delayed performance in cases like Rohrer & Taylor's interleaved-formula study. Crucially, learners reliably *prefer the inferior, fluent conditions* and misjudge which one helped them. An AI tuned to satisfaction, retention-of-users, or "frictionless" progress will be dragged toward blocking, massing, and rereading — the demonstrably worse design. A serious learning system must therefore **engineer desirable difficulty on purpose**, even when it dents short-term engagement metrics, and must treat "students love it" as a yellow flag, not a green one.
-
-- **SPOV 5 — If your coaches are mainly motivators, you've assigned your most expensive humans to your least effective lever.**
-   - **Elaboration:** Coe et al.'s review of 200+ studies finds the only two "strong evidence" components of great teaching are *content knowledge* and *quality of instruction* (questioning, assessment, scaffolding, review) — and finds that interventions addressing motivation/confidence *before* teaching content have impact on subsequent learning "close to zero." A coaching model whose primary job is encouragement is built on the weakest lever in the evidence base. The highest-leverage redeployment is toward error diagnosis, high-quality questioning, checks for understanding, and structured review. Motivation still matters at the margin (persistence, time-on-task), but as a *complement* to instruction, never a substitute for it.
-
-- **SPOV 6 — The mechanisms are validated; the multipliers are not. Conflating the two is how good science gets used to sell unproven products.**
-   - **Elaboration:** The retrieval-plus-spacing core is about as solid as education research gets. But a platform's *headline results* are typically internal, short-horizon **performance** data — the precise metric Soderstrom & Bjork warn overstates durable learning. "We use evidence-based mechanisms" and "we produce a 2.6x outcome" are different claims with very different evidentiary standing. Intellectual honesty requires reporting durable-retention and transfer evidence **separately** from engagement and first-pass numbers, and resisting the temptation to let the well-supported mechanism launder the unproven multiplier.
+- Authoring specific subject-matter content (the math/CS/physics/etc. curriculum itself).
+- Engineering and technical implementation details.
+- General K–12 classroom instruction, except where classroom evidence directly informs learning design.
 
 ---
 
 ## Experts
 
-> The thinkers behind the Knowledge Tree. Follow their primary work, not the second-hand summaries.
-
-- **John Sweller**
-   - **Who:** Emeritus Professor of Education, University of New South Wales (UNSW), Sydney.
-   - **Focus:** Originator of **Cognitive Load Theory** — working-memory limits, element interactivity, the worked-example effect, and the expertise-reversal effect as the basis for instructional design.
-   - **Why Follow:** He supplies the *mechanism* underneath nearly every other recommendation here (why explicit instruction and worked examples beat discovery for novices). If you understand Sweller, the rest of the field becomes legible.
-   - **Where:** https://research.unsw.edu.au/people/emeritus-professor-john-sweller
-
-- **Paul A. Kirschner & Richard E. Clark** (with Sweller)
-   - **Who:** Kirschner — Emeritus Professor of Educational Psychology (Open University of the Netherlands); Clark — emeritus, instructional/learning research (USC).
-   - **Focus:** The case against minimally guided instruction (discovery, inquiry, problem-based, constructivist) for novices.
-   - **Why Follow:** Their 2006 paper is the sharpest articulation of "explicit guidance beats discovery for novices" — and the controversy around it (the charge that they conflate unguided discovery with scaffolded inquiry) is itself worth understanding.
-   - **Where:** Search Google Scholar for "Kirschner Sweller Clark 2006 minimal guidance."
-
-- **Barak Rosenshine** (1930–2017)
-   - **Who:** Late Professor of Educational Psychology, University of Illinois at Urbana-Champaign.
-   - **Focus:** "Principles of Instruction" — translating cognitive science + studies of master teachers into a 10-principle classroom playbook (small steps, modeling, guided practice, high success rate, weekly/monthly review).
-   - **Why Follow:** The most practical bridge from theory to teaching procedure; his principles are effectively a spec sheet for the "explicit lesson" stage of a mastery loop.
-   - **Where:** "Principles of Instruction," *American Educator* (Spring 2012) — freely available via the AFT.
-
-- **Henry L. Roediger III & Jeffrey D. Karpicke**
-   - **Who:** Roediger — James S. McDonnell Distinguished University Professor, Washington University in St. Louis; Karpicke — Professor of Psychological Sciences, Purdue University.
-   - **Focus:** The **testing effect** — retrieval itself, not just study, drives long-term retention.
-   - **Why Follow:** They supply the foundational experiment for making quizzing the spine of consolidation, *and* the metacognitive twist (restudy raises confidence while testing raises memory).
-   - **Where:** https://psychnet.wustl.edu/memory/people/henry-l-roediger-iii/
-
 - **Robert A. Bjork & Elizabeth L. Bjork**
-   - **Who:** Distinguished Research Professors of Psychology, UCLA; founders of the Bjork Learning and Forgetting Lab.
-   - **Focus:** **Desirable difficulties**; the New Theory of Disuse (storage strength vs. retrieval strength); spacing, interleaving, varied practice, and why learners misjudge their own learning.
-   - **Why Follow:** The single best source on *why current performance lies about future memory* — indispensable for anyone designing metrics.
+   - **Who:** Distinguished Research Professors of Psychology, UCLA; directors of the Bjork Learning and Forgetting Lab.
+   - **Focus:** "Desirable difficulties" (spacing, interleaving, generation, retrieval) and the storage-strength vs retrieval-strength distinction (New Theory of Disuse); the gap between learning and performance.
+   - **Why Follow:** Their framework is the backbone of this BrainLift's argument that conditions which *slow apparent progress* (and which learners dislike) produce better long-term retention — central to designing difficulty without over-optimizing for in-the-moment performance.
    - **Where:** https://bjorklab.psych.ucla.edu/
 
-- **John Dunlosky**
-   - **Who:** Professor of Psychology and Director of the Science of Learning Center, Kent State University.
-   - **Focus:** Comparative evidence on study techniques; metacognition and self-regulated learning. Lead author of the 2013 "10 techniques" review (with Rawson, Marsh, Nathan & Willingham).
-   - **Why Follow:** He operationalized "evidence strength" for study strategies — the reason we can say *practice testing and distributed practice are high-utility* while rereading and highlighting are not.
-   - **Where:** https://www.kent.edu/psychology/profile/john-dunlosky
+- **Henry L. Roediger III**
+   - **Who:** James S. McDonnell Distinguished University Professor of Psychology, Washington University in St. Louis.
+   - **Focus:** The testing/retrieval effect — retrieval practice as a stronger driver of long-term retention than restudy, and the metacognitive illusions that make learners prefer restudy.
+   - **Why Follow:** Grounds the case for problem-first, retrieval-heavy lesson loops over passive re-reading, and explains why learners may *feel* they learn less from the better approach.
+   - **Where:** https://psychnet.wustl.edu/memory/people/henry-l-roediger-iii/
+
+- **John Sweller**
+   - **Who:** Emeritus Professor, University of New South Wales.
+   - **Focus:** Cognitive Load Theory; the worked-example effect; expertise reversal.
+   - **Why Follow:** Explains *why* undirected struggle and overly dense, explanation-heavy lessons backfire for novices, and why bite-sized, scaffolded, guided instruction works — central to the lesson-design and prequestion insights.
+   - **Where:** https://research.unsw.edu.au/people/emeritus-professor-john-sweller
 
 - **Daniel T. Willingham**
-   - **Who:** Professor of Psychology, University of Virginia; author of *Why Don't Students Like School?*
-   - **Focus:** Applying cognitive science to K–16 education; why knowledge is the substrate of thinking, and why "critical thinking" resists content-free teaching.
-   - **Why Follow:** The clearest writer on the knowledge-vs-skills question — the antidote to "AI means students don't need to know things."
+   - **Who:** Professor of Psychology, University of Virginia; cognitive scientist and education author.
+   - **Focus:** How thinking and memory work, why critical thinking is hard to teach, and the domain-specificity of transfer.
+   - **Why Follow:** Anchors the position that critical thinking and transfer depend on deep, domain-specific knowledge — shaping how content should be sequenced so skills actually transfer.
    - **Where:** http://www.danielwillingham.com/
 
-- **Nicholas C. Soderstrom & Robert A. Bjork**
-   - **Who:** Soderstrom — learning scientist (cognitive psychology, instruction); with R. Bjork (UCLA).
-   - **Focus:** The **learning-versus-performance** distinction — the integrative review that should govern how every learning dashboard is read.
-   - **Why Follow:** This is the paper that turns the abstract caution into a measurement mandate: instrument durable change, not acquisition-phase accuracy.
-   - **Where:** "Learning Versus Performance: An Integrative Review," *Perspectives on Psychological Science* (2015) — via Google Scholar.
+- **John Dunlosky**
+   - **Who:** Professor of Psychology, Kent State University.
+   - **Focus:** Evidence-ranked evaluation of study techniques (practice testing and distributed practice as highest utility; rereading/highlighting as lowest).
+   - **Why Follow:** Provides a defensible ranking for which learning mechanics to build around versus avoid.
+   - **Where:** https://www.kent.edu/psychology/profile/john-dunlosky
 
-- **Robert Coe** (with C. Aloisi, S. Higgins & L. Elliot Major)
-   - **Who:** Professor of Education; co-founder of Evidence Based Education; formerly Durham University (CEM).
-   - **Focus:** "What Makes Great Teaching?" (Sutton Trust, 2014) — which teaching practices have real evidence, and which are popular but ineffective.
-   - **Why Follow:** The best evidence-graded answer to "what should a great teacher/coach actually *do*," plus a clear list of ineffective practices (lavish praise, discovery for novices, ability grouping, rereading, motivation-before-content).
-   - **Where:** Sutton Trust / Evidence Based Education — search "Coe 2014 What Makes Great Teaching Sutton Trust."
+- **Carl Hendrick**
+   - **Who:** Professor of Evidence-Based Education; author and translator of learning research for practitioners.
+   - **Focus:** Bridging cognitive science and real instruction — struggle/guessing before learning, retrieval as learning (not just testing), motivation following achievement, and the importance of cumulative curriculum order.
+   - **Why Follow:** Source of several core framings in this BrainLift, especially "encourage *with* achievement, not *to* achievement" and that engagement is a poor proxy for learning.
+   - **Where:** Search "Carl Hendrick" on Google Scholar / X for current lectures and writing.
 
-- **Harold Pashler** (lead author, IES Practice Guide)
-   - **Who:** Distinguished Professor of Psychology, UC San Diego.
-   - **Focus:** The government-backed (IES / What Works Clearinghouse) translation of cognitive science into seven graded, actionable recommendations.
-   - **Why Follow:** The most honest single document about *evidence grades* — it tells you which recommendations are "Strong" (quizzing-to-re-expose, deep questioning) and which are merely "Low."
-   - **Where:** "Organizing Instruction and Study to Improve Student Learning," IES Practice Guide (2007) — ies.ed.gov / What Works Clearinghouse.
+- **Manu Kapur**
+   - **Who:** Professor of Learning Sciences and Higher Education, ETH Zurich.
+   - **Focus:** Productive failure — attempt-before-instruction yielding deeper conceptual understanding when consolidation follows.
+   - **Why Follow:** Supports the "attempt → reveal explanation → build on it" loop and clarifies the conditions under which struggle is productive rather than wasteful.
+   - **Where:** Search "Manu Kapur productive failure" on Google Scholar.
+
+---
+
+## DOK 4
+
+### When students have no knowledge on a subject, is the perfect time to ask questions on it.
 
 ---
 
 ## DOK 3: Insights
 
-> Original conclusions and connections drawn from the Knowledge Tree. These are the bridge from raw sources to the Spiky POVs above. Grouped thematically.
+### Giving students problems and just telling them to solve it is detrimental to their learning, but only when students spend a lot of time on questions. That's why prequestions should be handled carefully. They should strike the correct balance between priming/getting students to feel the struggle of learning, and spending too much brain power on them. Pre-questions should feel no stakes and they should not reward nor discourage students for accuracy.
 
-### A. On architecture and sequence
+### Lessons that are in depth, problem heavy, and explanation heavy may seem like well put together, but they can be the opposite. Students learn best in bite size pieces and lessons should reflect that to effiicently scaffold understanding.
 
-- **Insight 1:** The ten papers are not ten findings; they are one causal chain. Working memory is the bottleneck (Sweller) → therefore guide novices explicitly with small steps and worked examples (Kirschner/Sweller/Clark; Rosenshine) → once content is in, force retrieval and space it to build storage strength (Roediger/Karpicke; Bjork/Bjork; Dunlosky; Pashler) → none of which works without rich domain knowledge and a knowledgeable instructor (Willingham; Coe) → and you must measure the durable result, not the momentary one (Soderstrom/Bjork). The "explicit lesson → mastery quiz → spaced review → coach" loop is essentially this chain rendered as product architecture.
-
-- **Insight 2:** "Guidance" is not a fixed setting but a *decay curve*. The same intervention (a fully worked example) is optimal for a novice and counterproductive for an expert (the expertise-reversal effect). The design unit that matters is therefore not "how much help" but "how fast help should fade as schema forms."
-
-### B. On the best-evidenced core
-
-- **Insight 3:** Every paper that ranks or grades techniques independently lands on the same two at the top — retrieval and spacing. Convergence across a lab study (Roediger/Karpicke), a utility taxonomy (Dunlosky), a desirable-difficulties framework (Bjork/Bjork), and a government evidence grade (Pashler) is the strongest signal in the entire synthesis. For an AI system, spaced retrieval is not an engagement feature; it is the single highest-leverage mechanism available — *but only if the quizzes demand effortful generation and are genuinely spaced.*
-
-- **Insight 4:** The optimal spacing gap is not fixed; it scales with the target retention horizon. Cepeda et al. found the optimal gap was roughly 20% of the test delay at a few weeks, falling toward ~5% at a one-year delay. A spacing algorithm that ignores the *intended* retention interval is guessing.
-
-### C. On knowledge and thinking
-
-- **Insight 5:** Knowledge is not the enemy of thinking — it is the precondition for it. Willingham (transfer depends on deep familiarity) and Coe (content knowledge is the strongest-evidence teacher attribute) converge so cleanly that "teach generic skills" and "the evidence" point in opposite directions. The corollary for AI: a coherent, cumulative, knowledge-rich curriculum must come first; higher-order thinking is embedded *within* domains, never bolted on beside them.
-
-### D. On measurement (the load-bearing insight)
-
-- **Insight 6:** The metrics easiest to capture in real time — accuracy, fluency, speed, confidence — are exactly the ones that mislead. This is not a footnote; it is the central design risk of any AI that learns from in-session signals. A "mastered" item at first pass and a *retained* item at six weeks are different objects, and only the second is learning.
-
-- **Insight 7:** There is a built-in adversarial dynamic between good pedagogy and engagement-optimizing AI. Desirable difficulties slow visible progress and feel worse; learners actively prefer the inferior conditions. So an AI optimizing for satisfaction or visible speed is not neutral — it is biased *toward the wrong design*, and must be deliberately constrained against its own gradient.
-
-### E. On coaching and honesty
-
-- **Insight 8:** The coach's evidence-backed value is instructional, not motivational. Redeploying coaches from encouragement toward questioning, misconception diagnosis, and structured review moves them from the weakest lever to the strongest.
-
-- **Insight 9:** Evidence strength across these claims is genuinely uneven, and saying so is part of using them well. Retrieval/spacing are rock-solid; interleaving, dual-coding, and spacing-in-classrooms are "Moderate"; pre-questions and study-time allocation are "Low"; and deep-transfer evidence is thinner than surface-retention evidence. A BrainLift that flattens these into one confident "the science says" loses the very calibration that makes it trustworthy.
+### Giving students early achievements is not going easy on them. It actually sets them up to be even more successful and motivated to learn as achievement leads to motivation.
 
 ---
 
-## DOK 2: Knowledge Tree
-
-> The structured foundation: broad categories → sources → DOK 1 facts → DOK 2 summary. Sources are identified by full citation (the canonical reference); verified author/lab pages are linked where available.
+## Knowledge Tree:
 
 ### Category 1: Cognitive Architecture & Load (the "why")
 
@@ -276,12 +196,30 @@ The North Star is a single discipline: **separate the mechanisms the science str
       - **DOK 2 – Summary:** The two best-evidenced components of great teaching are content knowledge and quality of instruction. Measurement each has limits and should be triangulated, not used as a single gauge.
       - **Link to source:** Sutton Trust / Evidence Based Education (2014).
 
+### Category 6: Pedagogy & Learning Science
+
+   - **Subcategory 6.1: Supporting Research (What Works)**
+      - **Source: Freeman et al. (2014, PNAS); Roediger & Karpicke (2006); Slamecka & Graf (1978); Bjork & Bjork (2011); Kapur (2008); Mayer (CTML); Deci & Ryan (SDT)**
+         - **DOK 1 – Facts:**
+            - Freeman et al. (2014) meta-analysis of 225 STEM studies: active learning → +0.47 SD on exams; failure rates fell from 33.8% (lecture) to 21.8% (active learning)
+            - **Generation effect** (Slamecka & Graf, 1978): self-generated answers better retained than read answers; meta-analytic d ≈ 0.40
+            - **Testing/retrieval effect** (Roediger & Karpicke, 2006): retrieval practice strengthens long-term retention more than restudy
+            - **Desirable difficulties** (Bjork & Bjork, 2011): spacing, interleaving, generation, and retrieval slow apparent progress but improve long-term retention via storage-strength/retrieval-strength distinction
+            - **Productive failure** (Kapur, 2008; Sinha & Kapur, 2021 meta-analysis, 53 studies): attempt-before-instruction yields deeper conceptual understanding *if* consolidation follows
+            - **Mayer's CTML**: learning from words + pictures > words alone; coherence principle minimizes extraneous load
+            - **SDT** (Deci & Ryan): intrinsic motivation requires autonomy, competence, and relatedness
+         - **DOK 2 – Summary:** Active learning with students interacting in their studies shows performance gains in exams. Offering solutions before the student thinks it through is suboptimal. Students should try to answer before learning and after learning and experience the struggle. Even if thorough strategies like spacing, interleaving, and retrieval take longer to complete the same amount of content, it develops better long term understanding and retention. Visual instruction provides benefits over solely text based approaches. Autonomy, competence, and relatedness are all important to intrinsic motivation.
+     - **Source: Lecture from Carl Hendrick**
+        - **DOK 1 - Facts:**
+            - Guessing before learning is still beneficial because the struggle prepares the mind
+            - Instruction should start at the sentence level, not multi paragraph essay
+            - Working memory doesn’t actually work very well
+            - Retrieval isn’t a test of learning; it is learning —> retrieve what you were instructed a week or 2 later, and that rebuilds the knowledge. Forget again and then you retrieve again. only then can long term memory be affected
+            - You can’t connect the dots if you don’t have any - Its costly to know start and end and figure out the path - Understanding is remembering in disguise
+            - Motivations matters but not as much as you think - motivation doesn’t always lead to achievement, achievement often leads to motivation
+            - Transfer: skills are largely domain specific
+            - Learning and performance are not the same - engagement is a poor proxy indicator of learning
+            - Vague instruction means vague understanding- the order your curriculum is in is important (cumulative)
+        - **DOK 2 – Summary:** Struggle is good for students because that's where the learning happens. At the same time, struggling in the wrong places can lead to work spent inefficiently. Give students structure to critically think through problems. Encourage the user with achievement, not to achievement. Make sure your curriculum is well thought through.
+
 ---
-
-## Appendix: Caveats carried forward
-
-- **Performance metrics mislead.** Vendor "headline" results (e.g., large growth multipliers, near-universal top scores) are typically internal, short-horizon *performance* data — exactly what the literature warns overstates durable learning. Independent, delayed-retention evidence is the missing piece.
-- **The discovery critique is contested.** Kirschner/Sweller/Clark are credibly accused of lumping scaffolded PBL/inquiry with genuinely unguided discovery; the anti-discovery conclusion is strongest for *true minimal guidance with novices*.
-- **Evidence grades are uneven.** Only quizzing-to-re-expose and deep questioning earned "Strong" in the IES guide; spacing/interleaving/dual-coding are "Moderate"; pre-questions and study-time allocation are "Low."
-- **Boundary conditions apply.** Worked-example and guidance advantages reverse with expertise; desirable difficulties become *undesirable* if learners lack the prior knowledge to meet them — so scaffolding must be adaptive.
-- **Motivation still matters at the margin.** "Motivation-first ≈ zero learning impact" does not mean motivation is irrelevant; it aids persistence and time-on-task as a complement to instruction.

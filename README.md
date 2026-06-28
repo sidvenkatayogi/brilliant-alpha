@@ -45,8 +45,7 @@ Content is **data, not code**. A lesson is metadata + an ordered list of **typed
 - **Widget registry** (`src/widgets/registry.tsx`) maps `widget.type` → a React component.
 
 Adding a lesson is a JSON file in `src/content/lessons/` (+ registering one widget only if it needs a brand-new
-interaction). The renderer never special-cases a lesson — this is what makes Phase 2 (AI-generated content) drop in
-later without an engine rewrite.
+interaction). The renderer never special-cases a lesson.
 
 **Shared scenario state (`src/player/scenario/`).** A lesson JSON may declare an optional `scenario` block
 (`role` + `initialState`). A lightweight `ScenarioProvider`, scoped inside `LessonPlayer`, threads that living world
@@ -63,10 +62,10 @@ src/
   player/       LessonPlayer · StepRenderer · steps/* · FeedbackPanel · WidgetHost · scenario/ScenarioContext
   auth/         AuthContext · AuthForm · ProtectedRoute
   progress/     ProgressContext · firestore.ts · types.ts
-  cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · calendar · cohortName · scheduling · avatar · PeerAvatars   (Phase 2)
+  cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · calendar · cohortName · scheduling · avatar · PeerAvatars
   screens/      Dashboard · LessonRoute · CompletionScreen · Profile · Group
   lib/          firebase.ts (Auth + Firestore init) · api.ts (authed fetch to /api)
-api/            Vercel serverless functions: assignCohort · generateMeetingOutline · getQuizAnswerKey · _lib/ (admin, openai, outline, …)   (Phase 2)
+api/            Vercel serverless functions: cohort.ts (POST /api/cohort — assignCohort | generateOutline | getAnswerKey) · email-quiz.ts · email-unsubscribe.ts
 ```
 
 **Key guarantees**
@@ -93,21 +92,38 @@ All under a **Group** tab (`/group`), reached from the **View your group / Join 
   as **absolute UTC instants**, rendered in each member's local timezone. Overlap + suggested slot compute client-side.
   Times are **proposed → approved by the whole group → locked** (no member decides unilaterally); all proposed times
   stay viewable, you can withdraw an approval, and a meeting link can be pasted.
-- **AI meeting outline + group quiz** — `POST /api/generateMeetingOutline` (a Vercel serverless function) calls OpenAI
-  `gpt-4o-mini`, grounded in the lessons the **whole cohort** has completed; strict JSON, parsed defensively, cached on
-  the meeting, with a static fallback. The outline includes a short (~5 question) multiple-choice quiz everyone takes.
+- **AI meeting outline + group quiz** — `POST /api/cohort` with `action: generateOutline` calls OpenAI `gpt-4o-mini`,
+  grounded in the lessons the **whole cohort** has completed; strict JSON, parsed defensively, cached on the meeting,
+  with a static fallback. The outline includes a short (~5 question) multiple-choice quiz everyone takes.
+- **Answer-key verification layer** — before the quiz answer key is persisted, every AI-generated item is passed
+  through a deterministic, code-side verifier (verify → repair → replace). The verifier matches each `answerIndex`
+  against the lesson's authoritative `conceptSummary` and the known misconception `DISTRACTORS` bank. A mis-marked item
+  is repaired in place; an item that cannot be confidently verified is replaced with a provably-correct deterministic
+  item. No second AI call. Guarantee: every persisted answer is either verified-correct, repaired-correct, or a
+  deterministic item — a known misconception can never be the stored "correct" answer.
 - **Quiz answer key, time-gated** — quiz questions are public, but the answers live in a server-only subdoc
-  (`meetings/{wid}/private/answerKey`, denied to all clients). `POST /api/getQuizAnswerKey` releases them only once the
-  confirmed meeting time has arrived, and only when the learner presses **Reveal answer key**.
+  (`meetings/{wid}/private/answerKey`, denied to all clients). `POST /api/cohort` with `action: getAnswerKey` releases
+  them only once the confirmed meeting time has arrived, and only when the learner presses **Reveal answer key**.
 - **Calendar invites** — once a time is locked, members can add the meeting to their calendar via a downloadable `.ics`
   (Apple/Google/Outlook) or a one-click Google Calendar link; both embed the full outline + quiz questions.
 - **Peer progress on the course path** — each lesson card shows cohort-mates who started/completed it (randomized
   avatar colors), or "be the first one to complete this lesson!" until someone does. Presence, never rankings/scores.
+- **Daily email quiz** — `POST /api/email-quiz` (triggered by a Vercel Cron job at 07:00 UTC daily) sends each
+  opted-in learner a personalized 1–3 question probability quiz via Resend, grounded in their weak or completed topics.
+  Each email includes answers and explanations. Learners can opt out via a one-click HMAC-signed unsubscribe link
+  (`GET /api/email-unsubscribe?token=<signed>`), which sets `emailPrefs.dailyQuiz: false` via the Admin SDK (no login
+  required). Re-enabling is available from profile settings.
 
-**Backend**: three **Vercel serverless functions** in `api/` — `assignCohort` (transactional cohort matching),
-`generateMeetingOutline` (holds the OpenAI key), and `getQuizAnswerKey` (time-gated answer release). Each verifies the
-caller's Firebase ID token with the Admin SDK; the client calls them with `fetch` (`src/lib/api.ts`). Firebase Auth +
-Firestore remain the data backend. Everything else stays client + security rules. The OpenAI call is **stubbed against
+**Backend**: three **Vercel serverless functions** in `api/`:
+- `api/cohort.ts` — a single `POST /api/cohort` router with `action: assignCohort | generateOutline | getAnswerKey`.
+  Handles transactional cohort matching, AI meeting-outline generation (OpenAI), and time-gated answer-key release.
+  All helpers are inlined in this one file — the Vercel bundler does not reliably resolve relative imports under this
+  repo's ESM setup, so there is no `api/_lib/` tree; pure helpers are exported directly for unit tests.
+- `api/email-quiz.ts` — daily quiz mailer (cron-triggered; Bearer `CRON_SECRET` auth).
+- `api/email-unsubscribe.ts` — one-click HMAC-token unsubscribe (no login required).
+
+Each function verifies identity (Firebase ID token or HMAC token) with the Admin SDK; the client calls them with
+`fetch` (`src/lib/api.ts`). Firebase Auth + Firestore remain the data backend. The OpenAI call is **stubbed against
 the emulator**, so tests and local runs never hit the real API.
 
 ## Tech stack
@@ -159,7 +175,8 @@ npm run test:e2e             # Playwright — MVP + Group scenarios (auto-starts
 - **Unit/component:** answer-checking, feedback selection, mastery + unlock rule, streak transitions, step-renderer
   dispatch, widget logic, a content guard across the lessons, and (Phase 2) `levelBand`, overlap math incl. a
   **two-timezone** test, peer-progress state machine, outline parse/fallback, cohort-name generator, `allApproved`, and
-  the serverless logic (`api/_lib`: cohort matching, prompt construction, outline cache / quiz split / fallback paths).
+  the serverless logic in `api/cohort.ts` (cohort matching, prompt construction, outline cache / quiz split / fallback
+  paths, and the answer-key verification layer).
 - **Integration (emulator):** Phase 1 cross-user rules + the Phase 2 cohort privacy boundary (non-members blocked, no
   cross-member writes, no client `memberUids` write, projection has no forbidden fields, quiz answer key is server-only).
 - **E2E (Playwright):** Phase 1 flows **plus** Phase 2 — join via the CTA, propose → approve → lock + link, outline +
@@ -178,9 +195,9 @@ npm run deploy:rules         # push the Firestore security rules (firebase deplo
 ```
 
 Set these env vars in the Vercel project (Production + Preview): `OPENAI_API_KEY`, `FIREBASE_PROJECT_ID`,
-`FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (service account), plus the `VITE_FIREBASE_*` client config. A few pure
-helpers (`levelBand`, `cohortName`, outline parse/fallback) are duplicated in `api/_lib/` and `src/cohort/` — keep the
-copies in sync.
+`FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (service account), `CRON_SECRET` (authorizes the daily email-quiz
+cron), `RESEND_API_KEY` + `EMAIL_FROM` (email delivery), `EMAIL_TOKEN_SECRET` (HMAC key for unsubscribe tokens),
+`APP_URL` (base URL for unsubscribe links), plus the `VITE_FIREBASE_*` client config.
 
 ## Performance targets
 
