@@ -4,17 +4,14 @@ import { signUp } from './helpers'
 test('email quiz preference toggles and persists after reload', async ({ page }) => {
   await signUp(page)
 
-  // Navigate to Profile
-  await page.goto('/profile')
-
-  // Find the toggle switch
+  // The opt-in lives on the home page (floating, bottom-right) — no navigation needed.
   const toggle = page.getByRole('switch', { name: /daily probability quiz/i })
   await expect(toggle).toBeVisible()
 
   // Default: off
   await expect(toggle).toHaveAttribute('aria-checked', 'false')
 
-  // Toggle on
+  // Toggle on — must reflect immediately (no reload required).
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-checked', 'true')
 
@@ -23,7 +20,7 @@ test('email quiz preference toggles and persists after reload', async ({ page })
   const toggleAfterReload = page.getByRole('switch', { name: /daily probability quiz/i })
   await expect(toggleAfterReload).toHaveAttribute('aria-checked', 'true')
 
-  // Toggle off
+  // Toggle off — reflects immediately
   await toggleAfterReload.click()
   await expect(toggleAfterReload).toHaveAttribute('aria-checked', 'false')
 

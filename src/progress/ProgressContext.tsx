@@ -16,6 +16,7 @@ import {
   ensureUserDoc,
   fetchAllProgress,
   saveLessonProgress,
+  updateEmailPrefs,
   updateUserDoc,
 } from './firestore'
 import { saveMemberProgress } from '../cohort/firestore'
@@ -38,6 +39,12 @@ interface ProgressContextValue {
   completeLesson: (lesson: Lesson) => Promise<{ newMilestones: Milestone[]; mastery: number }>
   /** Reflect a server-side cohort assignment locally so the peer projection syncs. */
   setCohortId: (cohortId: string) => void
+  /**
+   * Toggle the daily-quiz email preference. Updates local state optimistically so
+   * the UI reflects the change immediately, persists to Firestore, and reverts on
+   * failure. Rejects if the write fails so callers can surface an error.
+   */
+  setDailyQuizEnabled: (enabled: boolean) => Promise<void>
 }
 
 const ProgressContext = createContext<ProgressContextValue | null>(null)
@@ -150,6 +157,26 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const setCohortId = useCallback((cohortId: string) => {
     setUserDoc((prev) => (prev && prev.cohortId !== cohortId ? { ...prev, cohortId } : prev))
   }, [])
+
+  const setDailyQuizEnabled = useCallback(
+    async (enabled: boolean) => {
+      if (!user) return
+      // Optimistic: flip local state now so the toggle animates immediately.
+      setUserDoc((prev) =>
+        prev ? { ...prev, emailPrefs: { ...prev.emailPrefs, dailyQuiz: enabled } } : prev,
+      )
+      try {
+        await updateEmailPrefs(user.uid, { dailyQuiz: enabled })
+      } catch (e) {
+        // Revert on failure so the UI never lies about the saved preference.
+        setUserDoc((prev) =>
+          prev ? { ...prev, emailPrefs: { ...prev.emailPrefs, dailyQuiz: !enabled } } : prev,
+        )
+        throw e
+      }
+    },
+    [user],
+  )
 
   const getProgress = useCallback(
     (lessonId: string): LessonProgress =>
@@ -308,6 +335,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         restartLesson,
         completeLesson,
         setCohortId,
+        setDailyQuizEnabled,
       }}
     >
       {children}

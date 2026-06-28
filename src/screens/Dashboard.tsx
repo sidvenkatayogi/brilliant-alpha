@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext'
 import { useProgress } from '../progress/ProgressContext'
 import { useCohort } from '../cohort/CohortContext'
 import PeerAvatars from '../cohort/PeerAvatars'
+import DailyQuizToggle from '../widgets/DailyQuizToggle'
 
 type State = 'locked' | 'available' | 'in_progress' | 'completed'
 
@@ -221,6 +222,8 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      <DailyQuizToggle />
     </div>
   )
 }
