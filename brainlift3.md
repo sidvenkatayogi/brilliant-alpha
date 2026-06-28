@@ -82,6 +82,10 @@
 
 ### You need to invade an adult student's mind with learning, because you can't leave it them to open your learning website.
 
+### When students have no knowledge on a subject, is the perfect time to ask questions on that subject.
+
+### Mature adults need child sized instruction.
+
 ---
 
 ## DOK 3: Insights
