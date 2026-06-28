@@ -55,41 +55,40 @@ describe('generateEmailQuiz', () => {
     vi.restoreAllMocks()
   })
 
-  it('AC1: missing apiKey (undefined) throws "AI unavailable"', async () => {
+  it('AC1: missing apiKey (undefined) resolves to deterministic EmailQuizResult', async () => {
     // No FIRESTORE_EMULATOR_HOST set for this test
     const { generateEmailQuiz } = await import('../../api/email-quiz')
-    await expect(
-      generateEmailQuiz(
-        { uid: 'u1', weakTopics: [], completedTopics: [], hasAnyProgress: false },
-        undefined,
-      ),
-    ).rejects.toThrow('AI unavailable')
+    const result = await generateEmailQuiz(
+      { uid: 'u1', weakTopics: [], completedTopics: [], hasAnyProgress: false },
+      undefined,
+    )
+    expect(result.model).toBe('deterministic')
+    expect(result.questions.length).toBeGreaterThanOrEqual(1)
+    expect(result.questions.length).toBeLessThanOrEqual(3)
   })
 
-  it('AC2: FIRESTORE_EMULATOR_HOST set throws even with a real apiKey', async () => {
+  it('AC2: FIRESTORE_EMULATOR_HOST set resolves to deterministic result even with a real apiKey', async () => {
     process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080'
     const { generateEmailQuiz } = await import('../../api/email-quiz')
-    await expect(
-      generateEmailQuiz(
-        { uid: 'u1', weakTopics: [], completedTopics: [], hasAnyProgress: false },
-        'sk-real-key',
-      ),
-    ).rejects.toThrow('AI unavailable')
+    const result = await generateEmailQuiz(
+      { uid: 'u1', weakTopics: [], completedTopics: [], hasAnyProgress: false },
+      'sk-real-key',
+    )
+    expect(result.model).toBe('deterministic')
   })
 
-  it('AC3: OpenAI error propagates', async () => {
+  it('AC3: OpenAI error resolves to deterministic result instead of propagating', async () => {
     vi.doMock('openai', () =>
       mockOpenAi(async () => {
         throw new Error('openai network error')
       }),
     )
     const { generateEmailQuiz } = await import('../../api/email-quiz')
-    await expect(
-      generateEmailQuiz(
-        { uid: 'u1', weakTopics: [], completedTopics: [], hasAnyProgress: false },
-        'sk-real-key',
-      ),
-    ).rejects.toThrow('openai network error')
+    const result = await generateEmailQuiz(
+      { uid: 'u1', weakTopics: [], completedTopics: [], hasAnyProgress: false },
+      'sk-real-key',
+    )
+    expect(result.model).toBe('deterministic')
   })
 
   it('AC4: valid mocked completion parses to correct EmailQuizResult shape', async () => {
@@ -398,7 +397,7 @@ describe('Cron batch handler', () => {
     expect(deliverySetSpy).toHaveBeenCalledWith({ status: 'skipped', reason: 'no-email' })
   })
 
-  it('AC13: AI failure sets status "failed" and batch continues to next user', async () => {
+  it('AC13: AI-unavailable user gets deterministic quiz sent; batch continues to next user', async () => {
     const user1DeliverySetSpy = vi.fn().mockResolvedValue(undefined)
     const user2DeliverySetSpy = vi.fn().mockResolvedValue(undefined)
     const resendSendSpy = vi.fn().mockResolvedValue({ data: { id: 'e2' }, error: null })
@@ -512,13 +511,25 @@ describe('Cron batch handler', () => {
 
     expect(res._status).toBe(200)
     const body = res._body as Record<string, unknown>
-    // user1 failed, user2 sent
-    expect(body.failed).toBe(1)
-    expect(body.sent).toBe(1)
-    // user1 delivery marked failed
-    expect(user1DeliverySetSpy).toHaveBeenCalledWith({ status: 'failed', reason: 'ai-unavailable' })
-    // user2 delivery attempted — Resend called
-    expect(resendSendSpy).toHaveBeenCalledTimes(1)
+    // both users sent (user1 gets deterministic quiz, user2 gets AI quiz)
+    expect(body.sent).toBe(2)
+    expect(body.failed).toBe(0)
+    // user1 delivery marked sent with deterministic model
+    expect(user1DeliverySetSpy).toHaveBeenCalledWith({
+      status: 'sent',
+      sentAt: '__serverTimestamp__',
+      model: 'deterministic',
+      quizTopic: 'Chance & the Long Run',
+    })
+    // user2 delivery marked sent with AI model
+    expect(user2DeliverySetSpy).toHaveBeenCalledWith({
+      status: 'sent',
+      sentAt: '__serverTimestamp__',
+      model: 'gpt-4o-mini',
+      quizTopic: 'Basic Probability',
+    })
+    // Both users got an email
+    expect(resendSendSpy).toHaveBeenCalledTimes(2)
   })
 
   it('AC14: dryRun=true → Resend not called and delivery record not written', async () => {

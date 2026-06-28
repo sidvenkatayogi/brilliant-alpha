@@ -112,7 +112,10 @@ All under a **Group** tab (`/group`), reached from the **View your group / Join 
   opted-in learner a personalized 1–3 question probability quiz via Resend, grounded in their weak or completed topics.
   Each email includes answers and explanations. Learners can opt out via a one-click HMAC-signed unsubscribe link
   (`GET /api/email-unsubscribe?token=<signed>`), which sets `emailPrefs.dailyQuiz: false` via the Admin SDK (no login
-  required). Re-enabling is available from profile settings.
+  required). Re-enabling is available from profile settings. AI-generated questions go through the same deterministic,
+  code-side verification layer (verify → repair → replace) used by the group quiz — a known misconception can never
+  be the "correct" answer in an email; if the AI is unavailable the email still sends using a deterministic
+  concept-recall quiz instead.
 
 **Backend**: three **Vercel serverless functions** in `api/`:
 - `api/cohort.ts` — a single `POST /api/cohort` router with `action: assignCohort | generateOutline | getAnswerKey`.

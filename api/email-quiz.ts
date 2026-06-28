@@ -24,6 +24,14 @@ export interface LessonMetaLite {
   masteryScore?: number   // only on weak topics
 }
 
+// New internal type — kept in sync with api/cohort.ts AuthoritativeLesson shape
+export interface AuthoritativeLesson {
+  id: string
+  title: string
+  conceptSummary: string
+  realWorldHook: string
+}
+
 export interface EmailQuizInput {
   uid: string
   weakTopics: LessonMetaLite[]
@@ -80,6 +88,96 @@ function getDb() {
   ensureApp()
   return getFirestore()
 }
+
+// ---------------------------------------------------------------------------
+// Inlined constants — kept in sync with api/cohort.ts
+// ---------------------------------------------------------------------------
+
+// DISTRACTORS — copy verbatim from api/cohort.ts
+const DISTRACTORS = [
+  'Probability only applies to fair coins and dice, never to real life.',
+  'Once an outcome is "due," it becomes more likely on the next try.',
+  'A single sample tells you the true long-run rate exactly.',
+  'Rare events can be ignored because they essentially never happen.',
+  'Knowing extra information can never change a probability.',
+]
+
+// STOPWORDS — copy verbatim from api/cohort.ts
+const STOPWORDS = new Set([
+  'a','an','the','is','are','was','were','be','in','on','at','to',
+  'of','and','or','but','it','its','this','that','for','with','by','as','not','can',
+  'never','once','only','you','your','i','we','they','one','two','three','all','any','no'
+])
+
+// normalize — copy verbatim from api/cohort.ts
+function normalize(s: string): Set<string> {
+  return new Set(
+    s.toLowerCase().replace(/[^a-z0-9\-\s]/g, ' ').split(/\s+/)
+      .filter(t => t.length > 0 && !STOPWORDS.has(t)),
+  )
+}
+
+// sim — copy verbatim from api/cohort.ts (overlap coefficient)
+function sim(a: string, b: string): number {
+  const A = normalize(a), B = normalize(b)
+  const minSize = Math.min(A.size, B.size)
+  if (minSize === 0) return 0
+  let overlap = 0
+  for (const t of A) if (B.has(t)) overlap++
+  return overlap / minSize
+}
+
+// CONCEPT_MIN, TIE_MARGIN — copy verbatim from api/cohort.ts
+export const CONCEPT_MIN = 0.25
+export const TIE_MARGIN  = 0.15
+
+// AUTH_LESSON_META — authoritative 5-lesson metadata (incl. realWorldHook); kept in sync with api/cohort.ts
+export const AUTH_LESSON_META: AuthoritativeLesson[] = [
+  {
+    id: 'long-run',
+    title: 'Chance & the Long Run',
+    conceptSummary:
+      'Probability is long-run relative frequency: unpredictable one at a time, predictable in bulk.',
+    realWorldHook:
+      "An insurance company has no idea whether you'll crash your car this year — but across two million drivers, the crash rate barely moves.",
+  },
+  {
+    id: 'combining-events',
+    title: 'Combining Events',
+    conceptSummary:
+      'Independent chances multiply for AND; overlapping chances must avoid double-counting for OR.',
+    realWorldHook:
+      "A jet's three hydraulic systems each fail on 1 in 1,000 flights — yet all three failing at once is about 1 in a billion.",
+  },
+  {
+    id: 'conditioning',
+    title: 'Conditioning',
+    conceptSummary:
+      'Conditioning on B shrinks the world to B, then recounts how often A happens inside it.',
+    realWorldHook:
+      "Every spam filter and every 'customers who bought this also bought…' runs on conditioning — updating a probability once you know something.",
+  },
+  {
+    id: 'bayes-base-rates',
+    title: 'Bayes & Base Rates',
+    conceptSummary:
+      'With a rare condition, the few true positives are swamped by false positives from the huge healthy group.',
+    realWorldHook:
+      "A '99% accurate' test for a rare disease comes back positive. Most people — including many doctors — think you almost certainly have it. They're wrong, often badly.",
+  },
+  {
+    id: 'expected-value',
+    title: 'Expected Value & Why the House Wins',
+    conceptSummary:
+      'Expected value = Σ(outcome × probability). A negative-EV game can feel winnable and still drain you.',
+    realWorldHook:
+      'A roulette bet pays 35-to-1 and feels like a jackpot waiting to happen. Over time it bleeds you at a steady, mathematically guaranteed rate.',
+  },
+]
+
+export const AUTH_LESSON_META_BY_ID: Record<string, AuthoritativeLesson> = Object.fromEntries(
+  AUTH_LESSON_META.map((l) => [l.id, l]),
+)
 
 // ---------------------------------------------------------------------------
 // Pure helpers (exported for unit tests)
@@ -160,7 +258,7 @@ function stripFences(raw: string): string {
   return s
 }
 
-function isEmailQuizQuestion(v: unknown): v is EmailQuizQuestion {
+export function isEmailQuizQuestion(v: unknown): v is EmailQuizQuestion {
   if (!v || typeof v !== 'object') return false
   const q = v as Record<string, unknown>
   return (
@@ -178,35 +276,205 @@ function isEmailQuizQuestion(v: unknown): v is EmailQuizQuestion {
 
 const EMAIL_QUIZ_MODEL = 'gpt-4o-mini'
 
+// ---------------------------------------------------------------------------
+// Deterministic quiz helpers (exported for unit tests)
+// ---------------------------------------------------------------------------
+
+/** "<title>": <conceptSummary> (e.g. <realWorldHook>) */
+export function deterministicEmailExplanation(l: AuthoritativeLesson): string {
+  return `"${l.title}": ${l.conceptSummary} (e.g. ${l.realWorldHook})`
+}
+
+/** Build a deterministic concept-recall item for lesson l at list-index i. */
+export function buildDeterministicEmailItem(l: AuthoritativeLesson, i: number): EmailQuizQuestion {
+  const correct = l.conceptSummary
+  const distractors = [
+    DISTRACTORS[i % DISTRACTORS.length],
+    DISTRACTORS[(i + 1) % DISTRACTORS.length],
+    DISTRACTORS[(i + 2) % DISTRACTORS.length],
+  ]
+  const answerIndex = i % 4
+  const options = [...distractors]
+  options.splice(answerIndex, 0, correct)
+  return {
+    question: `Which statement best captures the core idea of "${l.title}"?`,
+    options: options as [string, string, string, string],
+    answerIndex,
+    explanation: deterministicEmailExplanation(l),
+    topicId: l.id,
+  }
+}
+
+/** The canonical intro question when no grounded lessons exist. */
+export const CANONICAL_INTRO_ITEM: EmailQuizQuestion = {
+  question: 'In one sentence, what does a probability describe?',
+  options: [
+    'An outcome that is unpredictable one at a time but stable in the long run',
+    'A guarantee about what happens on the very next try',
+    'Something decided purely by luck with no underlying pattern',
+    'A value that only ever equals 50/50',
+  ],
+  answerIndex: 0,
+  explanation: 'Probability is long-run relative frequency: unpredictable individually, predictable in bulk.',
+  topicId: 'long-run',
+}
+
+/** Resolve the authoritative lesson list from the input for grounding. */
+export function resolveGrounded(input: EmailQuizInput): AuthoritativeLesson[] {
+  const candidates = input.weakTopics.length > 0
+    ? input.weakTopics
+    : input.completedTopics.slice(0, 3)
+  return candidates
+    .map(t => AUTH_LESSON_META_BY_ID[t.id])
+    .filter((l): l is AuthoritativeLesson => !!l)
+}
+
+/** Build a deterministic EmailQuizResult from a (possibly empty) grounded lesson list. */
+export function buildDeterministicEmailResult(grounded: AuthoritativeLesson[]): EmailQuizResult {
+  if (grounded.length === 0) {
+    return {
+      questions: [CANONICAL_INTRO_ITEM],
+      quizTopic: 'Probability Fundamentals',
+      model: 'deterministic',
+    }
+  }
+  const capped = grounded.slice(0, 3)
+  return {
+    questions: capped.map((l, i) => buildDeterministicEmailItem(l, i)),
+    quizTopic: capped.map(l => l.title).join(' & '),
+    model: 'deterministic',
+  }
+}
+
+/**
+ * Per-question verifier. Returns items with the same length and order as input.
+ * Each question is either PASSed unchanged, REPAIRed (answerIndex+explanation fixed),
+ * or REPLACEd with a deterministic concept-recall item.
+ */
+export function verifyEmailQuiz(
+  questions: EmailQuizQuestion[],
+  grounded: AuthoritativeLesson[],
+): { items: EmailQuizQuestion[]; repaired: number; replaced: number } {
+  let repaired = 0
+  let replaced = 0
+
+  const items = questions.map((q, i): EmailQuizQuestion => {
+    try {
+      // --- Structural gate (any → REPLACE) ---
+      const { options, answerIndex, explanation, topicId } = q
+
+      const topicInMeta = !!AUTH_LESSON_META_BY_ID[topicId]
+      const topicInGrounded = grounded.some(l => l.id === topicId)
+
+      const distinctOptions =
+        options && Array.isArray(options)
+          ? new Set(options.map((o: string) => o.trim())).size === 4
+          : false
+
+      const structuralFail =
+        !Array.isArray(options) ||
+        options.length !== 4 ||
+        !distinctOptions ||
+        !Number.isInteger(answerIndex) ||
+        answerIndex < 0 ||
+        answerIndex >= 4 ||
+        !explanation ||
+        typeof explanation !== 'string' ||
+        !topicInMeta ||
+        !topicInGrounded
+
+      if (structuralFail) {
+        replaced++
+        // REPLACE topic selection:
+        //   - topic valid + grounded → use that lesson
+        //   - topic valid but not grounded OR topic invalid → grounded[i % len]
+        //   - grounded empty → CANONICAL_INTRO_ITEM
+        if (grounded.length === 0) return CANONICAL_INTRO_ITEM
+        const lessonForReplace = (topicInMeta && topicInGrounded)
+          ? AUTH_LESSON_META_BY_ID[topicId]
+          : grounded[i % grounded.length]
+        return buildDeterministicEmailItem(lessonForReplace, i)
+      }
+
+      // --- Concept match ---
+      const L = AUTH_LESSON_META_BY_ID[topicId]
+      const scores = options.map((opt: string, idx: number) => ({
+        idx,
+        conceptScore: sim(opt, L.conceptSummary),
+        misconScore: Math.max(...DISTRACTORS.map(d => sim(opt, d))),
+      }))
+
+      const ranked = [...scores].sort((a, b) => b.conceptScore - a.conceptScore)
+      const best = ranked[0]
+      const runnerUp = ranked[1]
+
+      // REPLACE conditions
+      if (
+        best.conceptScore < CONCEPT_MIN ||
+        best.conceptScore - runnerUp.conceptScore < TIE_MARGIN ||
+        best.conceptScore <= best.misconScore
+      ) {
+        replaced++
+        // concept-fail: topic valid + grounded → use that lesson (already confirmed above)
+        return buildDeterministicEmailItem(L, i)
+      }
+
+      // PASS
+      if (answerIndex === best.idx) {
+        return q
+      }
+
+      // REPAIR
+      repaired++
+      return {
+        ...q,
+        answerIndex: best.idx,
+        explanation: deterministicEmailExplanation(L),
+      }
+    } catch {
+      // Any exception → REPLACE
+      replaced++
+      if (grounded.length === 0) return CANONICAL_INTRO_ITEM
+      return buildDeterministicEmailItem(grounded[i % grounded.length], i)
+    }
+  })
+
+  return { items, repaired, replaced }
+}
+
 /**
  * Calls OpenAI to generate 1–3 personalized probability quiz questions.
- * Throws (no fallback) if apiKey is missing or FIRESTORE_EMULATOR_HOST is set.
+ * Now total — never throws on AI-unavailable/failure; returns deterministic result instead.
  */
 export async function generateEmailQuiz(
   input: EmailQuizInput,
   apiKey: string | undefined,
 ): Promise<EmailQuizResult> {
+  const grounded = resolveGrounded(input)
+
+  // No API key or running against emulator → deterministic fallback
   if (!apiKey || process.env.FIRESTORE_EMULATOR_HOST) {
-    throw new Error('AI unavailable')
+    return buildDeterministicEmailResult(grounded)
   }
 
-  const topicsForPrompt = input.weakTopics.length > 0
-    ? input.weakTopics
-    : input.completedTopics.slice(0, 3)
+  try {
+    const topicsForPrompt = input.weakTopics.length > 0
+      ? input.weakTopics
+      : input.completedTopics.slice(0, 3)
 
-  const topicsJson = JSON.stringify(
-    topicsForPrompt.map((t) => ({ id: t.id, title: t.title, conceptSummary: t.conceptSummary })),
-    null,
-    2,
-  )
+    const topicsJson = JSON.stringify(
+      topicsForPrompt.map((t) => ({ id: t.id, title: t.title, conceptSummary: t.conceptSummary })),
+      null,
+      2,
+    )
 
-  const framingNote = !input.hasAnyProgress
-    ? 'This learner is brand new — use introductory framing, focusing on fundamental probability concepts.'
-    : input.weakTopics.length > 0
-      ? 'Focus on the topics listed — these are areas where the learner needs reinforcement (mastery < 60%).'
-      : 'The learner has completed some topics. Pick engaging questions from the topics listed.'
+    const framingNote = !input.hasAnyProgress
+      ? 'This learner is brand new — use introductory framing, focusing on fundamental probability concepts.'
+      : input.weakTopics.length > 0
+        ? 'Focus on the topics listed — these are areas where the learner needs reinforcement (mastery < 60%).'
+        : 'The learner has completed some topics. Pick engaging questions from the topics listed.'
 
-  const systemPrompt = `You are a probability quiz generator for an educational app.
+    const systemPrompt = `You are a probability quiz generator for an educational app.
 Generate 1–3 multiple-choice questions grounded in the provided topics.
 ${framingNote}
 
@@ -230,52 +498,58 @@ Rules:
 }
 No prose, no markdown fences.`
 
-  const userPrompt = `Topics to quiz on:
+    const userPrompt = `Topics to quiz on:
 ${topicsJson}
 
 Generate ${input.weakTopics.length > 0 ? `${Math.min(input.weakTopics.length, 3)} question(s)` : '1–2 introductory question(s)'} now.`
 
-  const client = new OpenAI({ apiKey })
-  const response = await client.chat.completions.create({
-    model: EMAIL_QUIZ_MODEL,
-    max_tokens: 1500,
-    temperature: 0.7,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-  })
+    const client = new OpenAI({ apiKey })
+    const response = await client.chat.completions.create({
+      model: EMAIL_QUIZ_MODEL,
+      max_tokens: 1500,
+      temperature: 0.7,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+    })
 
-  const text = response.choices[0]?.message?.content ?? ''
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(stripFences(text))
+    const text = response.choices[0]?.message?.content ?? ''
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(stripFences(text))
+    } catch {
+      return buildDeterministicEmailResult(grounded)
+    }
+
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      !Array.isArray((parsed as Record<string, unknown>).questions) ||
+      typeof (parsed as Record<string, unknown>).quizTopic !== 'string'
+    ) {
+      return buildDeterministicEmailResult(grounded)
+    }
+
+    const raw = parsed as { questions: unknown[]; quizTopic: string }
+    if (raw.questions.length < 1 || raw.questions.length > 3) {
+      return buildDeterministicEmailResult(grounded)
+    }
+
+    // Let verifyEmailQuiz handle per-question validation instead of pre-rejecting
+    const { items, repaired, replaced } = verifyEmailQuiz(
+      raw.questions as EmailQuizQuestion[],
+      grounded,
+    )
+    if (repaired + replaced > 0) {
+      console.warn('[verifyEmailQuiz] repaired=' + repaired + ' replaced=' + replaced)
+    }
+
+    return { questions: items, quizTopic: raw.quizTopic, model: EMAIL_QUIZ_MODEL }
   } catch {
-    throw new Error('Failed to parse AI response as JSON')
-  }
-
-  if (
-    !parsed ||
-    typeof parsed !== 'object' ||
-    !Array.isArray((parsed as Record<string, unknown>).questions) ||
-    typeof (parsed as Record<string, unknown>).quizTopic !== 'string'
-  ) {
-    throw new Error('AI response missing required fields')
-  }
-
-  const raw = parsed as { questions: unknown[]; quizTopic: string }
-  if (raw.questions.length < 1 || raw.questions.length > 3) {
-    throw new Error('AI returned wrong number of questions')
-  }
-  if (!raw.questions.every(isEmailQuizQuestion)) {
-    throw new Error('AI returned malformed questions')
-  }
-
-  return {
-    questions: raw.questions as EmailQuizQuestion[],
-    quizTopic: raw.quizTopic,
-    model: EMAIL_QUIZ_MODEL,
+    // Network error or any other exception → deterministic fallback
+    return buildDeterministicEmailResult(grounded)
   }
 }
 
@@ -371,7 +645,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         // Generate HMAC token for unsubscribe
         const token = generateHmacToken(emailTokenSecret, uid)
 
-        // Generate quiz via AI
+        // Generate quiz — now total (never throws on AI-unavailable/failure).
+        // The catch here is a safety net for unexpected exceptions only.
         let quizResult: EmailQuizResult
         try {
           quizResult = await generateEmailQuiz(quizInput, process.env.OPENAI_API_KEY)
@@ -379,7 +654,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           failed++
           countedFailed = true
           if (!dryRun) {
-            await deliveryRef.set({ status: 'failed', reason: 'ai-unavailable' })
+            await deliveryRef.set({ status: 'failed', reason: 'quiz-generation-error' })
           }
           continue
         }
