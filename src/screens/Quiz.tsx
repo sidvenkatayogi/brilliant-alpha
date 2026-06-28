@@ -4,6 +4,7 @@ import { lessons } from '../content/loadLessons'
 import { generateMixedQuiz } from '../engine/quiz'
 import type { QuizQuestion, QuizResult } from '../engine/quiz'
 import { useProgress } from '../progress/ProgressContext'
+import { fetchPracticeQuiz } from '../cohort/practiceQuiz'
 
 export default function Quiz() {
   const { progressByLesson, loading, submitQuizAttempt } = useProgress()
@@ -19,21 +20,39 @@ export default function Quiz() {
   // to use as an effect dependency in place of the full completedMeta array object.
   const completedKey = completedMeta.map((m) => m.id).join(',')
 
+  // Derive lesson id lists for the API call
+  const completedLessonIds = completedMeta.map((m) => m.id)
+  const weakLessonIds = completedMeta
+    .filter((m) => (progressByLesson[m.id]?.masteryScore ?? 0) < 0.6)
+    .map((m) => m.id)
+
   // Quiz state
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [picks, setPicks] = useState<(number | null)[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [result, setResult] = useState<QuizResult | null>(null)
   const [showWarning, setShowWarning] = useState(false)
+  const [quizLoading, setQuizLoading] = useState(false)
 
-  // Generate a fresh quiz when completedMeta is available (and on "Generate new quiz")
-  function generateQuiz() {
-    const qs = generateMixedQuiz(completedMeta, 5)
-    setQuestions(qs)
-    setPicks(new Array(qs.length).fill(null))
+  // Generate a fresh quiz when completedMeta is available (and on "Generate new quiz").
+  // Async: tries fetchPracticeQuiz first; falls back to local generateMixedQuiz on any error.
+  async function generateQuiz() {
+    setQuizLoading(true)
+    setPicks([])
     setSubmitted(false)
     setResult(null)
     setShowWarning(false)
+    try {
+      const qs = await fetchPracticeQuiz(completedLessonIds, weakLessonIds)
+      setQuestions(qs)
+      setPicks(new Array(qs.length).fill(null))
+    } catch {
+      const qs = generateMixedQuiz(completedMeta, 5)
+      setQuestions(qs)
+      setPicks(new Array(qs.length).fill(null))
+    } finally {
+      setQuizLoading(false)
+    }
   }
 
   // Auto-generate once loading is done AND there are completed lessons AND no quiz yet.
@@ -41,11 +60,11 @@ export default function Quiz() {
   // arrives after loading flips (auth/progress load race).
   // `generateQuiz` is intentionally omitted from deps: it is a render-scope function
   // that reads `completedMeta` from the same render as `completedKey`, so it is always
-  // consistent when the effect fires. Extracting it to useCallback would require
-  // completedMeta as a dep, recreating it every render — no benefit here.
+  // consistent when the effect fires. Calling an async fn from useEffect is fine —
+  // we do not await it in the effect body.
   useEffect(() => {
     if (!loading && completedKey.length > 0 && questions.length === 0) {
-      generateQuiz()
+      void generateQuiz()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, completedKey])
@@ -99,56 +118,64 @@ export default function Quiz() {
         <p className="text-sm text-slate-500">
           {submitted && result
             ? `Score: ${result.score} / ${result.total}`
-            : `${questions.length} question${questions.length !== 1 ? 's' : ''}`}
+            : quizLoading
+              ? 'Generating your quiz…'
+              : `${questions.length} question${questions.length !== 1 ? 's' : ''}`}
         </p>
       </header>
 
-      <div data-testid="quiz" className="mt-6 space-y-6">
-        {questions.map((q, qi) => {
-          const pick = picks[qi] ?? null
-          const isSubmitted = submitted && result !== null
-          const correctIdx = q.correctIndex
-          return (
-            <div key={qi} data-testid={`quiz-q-${qi}`} className="card">
-              <p className="text-sm font-semibold text-ink">
-                {qi + 1}. {q.prompt}
-              </p>
-              <div className="mt-3 space-y-2">
-                {q.options.map((opt, oi) => {
-                  const selected = pick === oi
-                  const isCorrect = isSubmitted && correctIdx === oi
-                  const wrongPick = isSubmitted && selected && !isCorrect
-                  const cls = isCorrect
-                    ? 'ring-good bg-good/10 text-ink'
-                    : wrongPick
-                      ? 'ring-bad bg-bad/10 text-ink'
-                      : selected
-                        ? 'ring-accent bg-accent/5 text-ink'
-                        : 'ring-slate-200 text-slate-600 hover:ring-slate-300'
-                  return (
-                    <button
-                      type="button"
-                      key={oi}
-                      data-testid={`quiz-opt-${qi}-${oi}`}
-                      onClick={() => handlePick(qi, oi)}
-                      disabled={submitted}
-                      className={`flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm ring-1 transition ${cls}`}
-                    >
-                      <span className="font-semibold">{String.fromCharCode(65 + oi)}.</span>
-                      <span className="flex-1">{opt}</span>
-                      {isCorrect && <span className="font-bold text-good">✓</span>}
-                      {wrongPick && <span className="font-bold text-bad">✕</span>}
-                    </button>
-                  )
-                })}
+      {quizLoading ? (
+        <div data-testid="quiz-loading" className="mt-10 grid min-h-[20vh] place-items-center text-slate-400">
+          Generating your quiz…
+        </div>
+      ) : (
+        <div data-testid="quiz" className="mt-6 space-y-6">
+          {questions.map((q, qi) => {
+            const pick = picks[qi] ?? null
+            const isSubmitted = submitted && result !== null
+            const correctIdx = q.correctIndex
+            return (
+              <div key={qi} data-testid={`quiz-q-${qi}`} className="card">
+                <p className="text-sm font-semibold text-ink">
+                  {qi + 1}. {q.prompt}
+                </p>
+                <div className="mt-3 space-y-2">
+                  {q.options.map((opt, oi) => {
+                    const selected = pick === oi
+                    const isCorrect = isSubmitted && correctIdx === oi
+                    const wrongPick = isSubmitted && selected && !isCorrect
+                    const cls = isCorrect
+                      ? 'ring-good bg-good/10 text-ink'
+                      : wrongPick
+                        ? 'ring-bad bg-bad/10 text-ink'
+                        : selected
+                          ? 'ring-accent bg-accent/5 text-ink'
+                          : 'ring-slate-200 text-slate-600 hover:ring-slate-300'
+                    return (
+                      <button
+                        type="button"
+                        key={oi}
+                        data-testid={`quiz-opt-${qi}-${oi}`}
+                        onClick={() => handlePick(qi, oi)}
+                        disabled={submitted}
+                        className={`flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm ring-1 transition ${cls}`}
+                      >
+                        <span className="font-semibold">{String.fromCharCode(65 + oi)}.</span>
+                        <span className="flex-1">{opt}</span>
+                        {isCorrect && <span className="font-bold text-good">✓</span>}
+                        {wrongPick && <span className="font-bold text-bad">✕</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+                {isSubmitted && (
+                  <p className="mt-2 text-xs text-slate-500">{q.explanation}</p>
+                )}
               </div>
-              {isSubmitted && (
-                <p className="mt-2 text-xs text-slate-500">{q.explanation}</p>
-              )}
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Submit / score / new quiz controls */}
       <div className="mt-6 space-y-3">
@@ -163,6 +190,7 @@ export default function Quiz() {
             type="button"
             data-testid="quiz-submit"
             onClick={handleSubmit}
+            disabled={quizLoading}
             className="btn-primary w-full"
           >
             Submit
@@ -175,7 +203,8 @@ export default function Quiz() {
             <button
               type="button"
               data-testid="quiz-new"
-              onClick={generateQuiz}
+              onClick={() => void generateQuiz()}
+              disabled={quizLoading}
               className="btn-primary w-full"
             >
               Generate new quiz
@@ -183,6 +212,7 @@ export default function Quiz() {
           </>
         )}
       </div>
+
     </Shell>
   )
 }

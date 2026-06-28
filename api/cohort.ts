@@ -30,6 +30,15 @@ export interface QuizAnswer {
   explanation: string
 }
 export type FullQuizQuestion = QuizQuestion & QuizAnswer
+
+// Practice-quiz wire shape (engine-compatible; same fields as src/engine/quiz.ts QuizQuestion)
+export interface PracticeQuizQuestion {
+  lessonId: string
+  prompt: string
+  options: string[]
+  correctIndex: number
+  explanation: string
+}
 export interface AiOutline {
   warmUp: string
   agenda: { title: string; minutes: number; facilitatorNote: string }[]
@@ -552,6 +561,159 @@ export async function generateOutline(
 }
 
 // ---------------------------------------------------------------------------
+// Practice-quiz generation (exported for unit tests)
+// ---------------------------------------------------------------------------
+
+const PRACTICE_QUIZ_MODEL = 'gpt-4o-mini'
+
+export async function generatePracticeQuiz(
+  grounded: Array<{ id: string; title: string; conceptSummary: string }>,
+  weakIds: string[],
+  apiKey: string | undefined,
+): Promise<{ questions: PracticeQuizQuestion[]; source: 'ai' | 'deterministic' }> {
+  const target = Math.min(5, grounded.length)
+
+  // Helper: map a FullQuizQuestion (from buildDeterministicItem) → PracticeQuizQuestion
+  function deterministicToPractice(item: FullQuizQuestion): PracticeQuizQuestion {
+    return {
+      lessonId: item.lessonId,
+      prompt: item.question,
+      options: item.options,
+      correctIndex: item.answerIndex,
+      explanation: item.explanation,
+    }
+  }
+
+  // Stub / hermetic path: no network, fully deterministic
+  if (!apiKey || process.env.OUTLINE_STUB === 'true' || !!process.env.FIRESTORE_EMULATOR_HOST) {
+    const questions = grounded
+      .slice(0, target)
+      .map((g, i) => deterministicToPractice(buildDeterministicItem(LESSON_META_BY_ID[g.id], i)))
+    return { questions, source: 'deterministic' }
+  }
+
+  // AI path
+  const groundedIds = new Set(grounded.map((g) => g.id))
+  const weakLabel = weakIds.length > 0 ? weakIds.join(', ') : '(none)'
+
+  const systemPrompt =
+    `You are a quiz generator for a probability learning app.\n` +
+    `Generate exactly ${target} multiple-choice questions grounded in the lessons provided.\n` +
+    `Use a MIX of question types: concept-recall, applied/calculation, and scenario-based.\n` +
+    `Rules:\n` +
+    `- Each question references exactly ONE lesson via "topicId" (use the provided id).\n` +
+    `- Exactly 4 options; exactly one correct; set "answerIndex" to its 0-based index.\n` +
+    `- Write a one-line "explanation" of why the correct answer is right.\n` +
+    `- Prioritize these weak topics: ${weakLabel}.\n` +
+    `- Return ONLY a JSON object — no prose, no markdown fences.\n` +
+    `Schema: { "questions": [ { "question": string, "options": [string,string,string,string], ` +
+    `"answerIndex": number, "explanation": string, "topicId": string } ] }`
+
+  const lessonLines = grounded
+    .map((g) => `- ${g.id}: "${g.title}" — ${g.conceptSummary}`)
+    .join('\n')
+  const userPrompt = `Lessons:\n${lessonLines}\n\nGenerate ${target} questions now.`
+
+  let aiItems: PracticeQuizQuestion[] = []
+
+  try {
+    const client = new OpenAI({ apiKey })
+    const response = await client.chat.completions.create({
+      model: PRACTICE_QUIZ_MODEL,
+      max_tokens: 1200,
+      temperature: 0.8,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+    })
+    const text = response.choices[0]?.message?.content ?? ''
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(stripFences(text))
+    } catch {
+      // parse failure → fall through to deterministic
+      parsed = null
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      const raw = (parsed as Record<string, unknown>).questions
+      if (Array.isArray(raw)) {
+        for (const item of raw) {
+          if (!item || typeof item !== 'object') continue
+          const q = item as Record<string, unknown>
+          const options = q.options
+          const answerIndex = q.answerIndex
+          const question = q.question
+          const explanation = q.explanation
+          const topicId = q.topicId
+
+          // Per-item validation — trust AI, drop on fail, no repair
+          if (
+            !Array.isArray(options) ||
+            options.length !== 4 ||
+            new Set((options as string[]).map((o) => String(o).trim())).size !== 4 ||
+            !Number.isInteger(answerIndex) ||
+            (answerIndex as number) < 0 ||
+            (answerIndex as number) > 3 ||
+            typeof question !== 'string' ||
+            question.trim().length === 0 ||
+            typeof explanation !== 'string' ||
+            explanation.trim().length === 0 ||
+            typeof topicId !== 'string' ||
+            !LESSON_META_BY_ID[topicId] ||
+            !groundedIds.has(topicId)
+          ) {
+            continue
+          }
+
+          aiItems.push({
+            lessonId: topicId,
+            prompt: question,
+            options: options as string[],
+            correctIndex: answerIndex as number,
+            explanation: explanation,
+          })
+        }
+      }
+    }
+  } catch {
+    // OpenAI throw/timeout → full deterministic fallback
+    aiItems = []
+  }
+
+  // Pad below target with deterministic items (prefer lessons not already covered)
+  const coveredIds = new Set(aiItems.map((q) => q.lessonId))
+  let padded = 0
+  if (aiItems.length < target) {
+    const uncovered = grounded.filter((g) => !coveredIds.has(g.id))
+    const padSource = uncovered.length > 0 ? uncovered : grounded
+    let padIdx = 0
+    while (aiItems.length < target && padIdx < padSource.length * 2) {
+      const g = padSource[padIdx % padSource.length]
+      const meta = LESSON_META_BY_ID[g.id]
+      if (meta) {
+        aiItems.push(deterministicToPractice(buildDeterministicItem(meta, padIdx)))
+        padded++
+      }
+      padIdx++
+    }
+  }
+
+  const survivingAiCount = aiItems.length - padded
+  if (padded > 0) {
+    console.warn(`[practiceQuiz] dropped=${Math.max(0, target - survivingAiCount)} padded=${padded}`)
+  }
+
+  // Cap at target
+  const questions = aiItems.slice(0, target)
+  const source: 'ai' | 'deterministic' = survivingAiCount > 0 ? 'ai' : 'deterministic'
+
+  return { questions, source }
+}
+
+// ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
 
@@ -706,6 +868,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       case 'getAnswerKey':
         result = await doGetAnswerKey(uid, body as { cohortId?: string; weekId?: string })
         break
+      case 'generatePracticeQuiz': {
+        const completedLessonIds = body.completedLessonIds
+        if (!Array.isArray(completedLessonIds)) throw new ApiError(400, 'completedLessonIds must be an array.')
+        const grounded = (completedLessonIds as string[])
+          .filter((id) => typeof id === 'string' && !!LESSON_META_BY_ID[id])
+          .map((id) => {
+            const m = LESSON_META_BY_ID[id]
+            return { id: m.id, title: m.title, conceptSummary: m.conceptSummary }
+          })
+        const rawWeakIds = body.weakLessonIds
+        const weakIds = (Array.isArray(rawWeakIds) ? (rawWeakIds as string[]) : []).filter(
+          (id) => typeof id === 'string' && !!LESSON_META_BY_ID[id],
+        )
+        if (grounded.length === 0) {
+          result = { questions: [], source: 'deterministic' }
+          break
+        }
+        result = await generatePracticeQuiz(grounded, weakIds, process.env.OPENAI_API_KEY)
+        break
+      }
       default:
         throw new ApiError(400, `Unknown action: ${body.action ?? '(none)'}`)
     }

@@ -108,10 +108,10 @@ All under a **Group** tab (`/group`), reached from the **View your group / Join 
   (Apple/Google/Outlook) or a one-click Google Calendar link; both embed the full outline + quiz questions.
 - **Peer progress on the course path** — each lesson card shows cohort-mates who started/completed it (randomized
   avatar colors), or "be the first one to complete this lesson!" until someone does. Presence, never rankings/scores.
-- **Practice quiz** — a Dashboard CTA ("Practice quiz") links to `/quiz`. On open, a fresh deterministic multiple-choice quiz (≤5 questions) is generated client-side from the learner's completed lessons: one `conceptSummary`-recall question per sampled lesson, 4 distinct options, options reshuffled each visit. Submitting scores the attempt, nudges `masteryScore` in Firestore, and shows per-question explanations. Fully client-side — no AI, no email, no server calls.
+- **Practice quiz** — a Dashboard CTA ("Practice quiz") links to `/quiz`. On open, varied multiple-choice questions (≤5) are generated on demand via `POST /api/cohort` (`action: generatePracticeQuiz`) using OpenAI `gpt-4o-mini`, grounded in the learner's completed lessons and gated by login. If the AI is unavailable or the request times out, the quiz falls back to a deterministic `conceptSummary`-based set so the quiz always loads. Submitting scores the attempt and nudges `masteryScore` in Firestore.
 
 **Backend**: one **Vercel serverless function** in `api/`:
-- `api/cohort.ts` — a single `POST /api/cohort` router with `action: assignCohort | generateOutline | getAnswerKey`.
+- `api/cohort.ts` — a single `POST /api/cohort` router with `action: assignCohort | generateOutline | getAnswerKey | generatePracticeQuiz`.
   Handles transactional cohort matching, AI meeting-outline generation (OpenAI), and time-gated answer-key release.
   All helpers are inlined in this one file — the Vercel bundler does not reliably resolve relative imports under this
   repo's ESM setup, so there is no `api/_lib/` tree; pure helpers are exported directly for unit tests.
