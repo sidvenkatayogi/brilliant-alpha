@@ -10,19 +10,10 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      // Email delivery records: read-own only; client writes denied (Admin SDK only).
-      match /emailDelivery/{dateId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        // no write allow -> denied (Admin SDK bypasses rules)
-      }
-
-      // Preserve existing broad access for all other subcollections.
-      // Write guard explicitly excludes emailDelivery so the OR of all matching
-      // rules does not re-grant writes that the emailDelivery block above omits.
+      // All subcollections (progress, quizAttempts, etc.): own-uid read/write only.
       match /{subcol}/{docId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if request.auth != null && request.auth.uid == userId
-                     && subcol != 'emailDelivery';
+        allow read:  if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
       }
     }
 

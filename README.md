@@ -65,7 +65,7 @@ src/
   cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · calendar · cohortName · scheduling · avatar · PeerAvatars
   screens/      Dashboard · LessonRoute · CompletionScreen · Profile · Group
   lib/          firebase.ts (Auth + Firestore init) · api.ts (authed fetch to /api)
-api/            Vercel serverless functions: cohort.ts (POST /api/cohort — assignCohort | generateOutline | getAnswerKey) · email-quiz.ts · email-unsubscribe.ts
+api/            Vercel serverless functions: cohort.ts (POST /api/cohort — assignCohort | generateOutline | getAnswerKey)
 ```
 
 **Key guarantees**
@@ -108,22 +108,13 @@ All under a **Group** tab (`/group`), reached from the **View your group / Join 
   (Apple/Google/Outlook) or a one-click Google Calendar link; both embed the full outline + quiz questions.
 - **Peer progress on the course path** — each lesson card shows cohort-mates who started/completed it (randomized
   avatar colors), or "be the first one to complete this lesson!" until someone does. Presence, never rankings/scores.
-- **Daily email quiz** — `POST /api/email-quiz` (triggered by a Vercel Cron job at 07:00 UTC daily) sends each
-  opted-in learner a personalized 1–3 question probability quiz via Resend, grounded in their weak or completed topics.
-  Each email includes answers and explanations. Learners can opt out via a one-click HMAC-signed unsubscribe link
-  (`GET /api/email-unsubscribe?token=<signed>`), which sets `emailPrefs.dailyQuiz: false` via the Admin SDK (no login
-  required). Re-enabling is available from profile settings. AI-generated questions go through the same deterministic,
-  code-side verification layer (verify → repair → replace) used by the group quiz — a known misconception can never
-  be the "correct" answer in an email; if the AI is unavailable the email still sends using a deterministic
-  concept-recall quiz instead.
+- **Practice quiz** — a Dashboard CTA ("Practice quiz") links to `/quiz`. On open, a fresh deterministic multiple-choice quiz (≤5 questions) is generated client-side from the learner's completed lessons: one `conceptSummary`-recall question per sampled lesson, 4 distinct options, options reshuffled each visit. Submitting scores the attempt, nudges `masteryScore` in Firestore, and shows per-question explanations. Fully client-side — no AI, no email, no server calls.
 
-**Backend**: three **Vercel serverless functions** in `api/`:
+**Backend**: one **Vercel serverless function** in `api/`:
 - `api/cohort.ts` — a single `POST /api/cohort` router with `action: assignCohort | generateOutline | getAnswerKey`.
   Handles transactional cohort matching, AI meeting-outline generation (OpenAI), and time-gated answer-key release.
   All helpers are inlined in this one file — the Vercel bundler does not reliably resolve relative imports under this
   repo's ESM setup, so there is no `api/_lib/` tree; pure helpers are exported directly for unit tests.
-- `api/email-quiz.ts` — daily quiz mailer (cron-triggered; Bearer `CRON_SECRET` auth).
-- `api/email-unsubscribe.ts` — one-click HMAC-token unsubscribe (no login required).
 
 Each function verifies identity (Firebase ID token or HMAC token) with the Admin SDK; the client calls them with
 `fetch` (`src/lib/api.ts`). Firebase Auth + Firestore remain the data backend. The OpenAI call is **stubbed against
@@ -198,9 +189,7 @@ npm run deploy:rules         # push the Firestore security rules (firebase deplo
 ```
 
 Set these env vars in the Vercel project (Production + Preview): `OPENAI_API_KEY`, `FIREBASE_PROJECT_ID`,
-`FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (service account), `CRON_SECRET` (authorizes the daily email-quiz
-cron), `RESEND_API_KEY` + `EMAIL_FROM` (email delivery), `EMAIL_TOKEN_SECRET` (HMAC key for unsubscribe tokens),
-`APP_URL` (base URL for unsubscribe links), plus the `VITE_FIREBASE_*` client config.
+`FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (service account), plus the `VITE_FIREBASE_*` client config.
 
 ## Performance targets
 

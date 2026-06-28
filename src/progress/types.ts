@@ -35,33 +35,6 @@ export interface UserDoc {
   milestones: Milestone[]
   /** Phase 2: the cohort the learner belongs to; null until lazily assigned. */
   cohortId: string | null
-  /** Email quiz opt-in preferences. Absent means opt-out (dailyQuiz: false). */
-  emailPrefs?: EmailPrefs
-}
-
-export interface EmailPrefs {
-  dailyQuiz: boolean
-  /** Set by Admin SDK on unsubscribe. Absent when subscribed. ms epoch in app. */
-  optedOutAt?: number
-}
-
-export type EmailDeliveryStatus = 'sent' | 'failed' | 'skipped'
-
-export type EmailDeliveryReason =
-  | 'ai-unavailable'   // OpenAI call threw
-  | 'send-error'       // Resend call threw
-  | 'no-email'         // userDoc.email absent
-
-export interface EmailDeliveryRecord {
-  status: EmailDeliveryStatus
-  /** Present when status === 'sent'. ms epoch. */
-  sentAt?: number
-  /** Present when status !== 'sent'. */
-  reason?: EmailDeliveryReason
-  /** LLM model identifier. Present when status === 'sent'. */
-  model?: string
-  /** Human-readable topic. Present when status === 'sent'. */
-  quizTopic?: string
 }
 
 export function emptyProgress(lessonId: string): LessonProgress {
@@ -75,4 +48,11 @@ export function emptyProgress(lessonId: string): LessonProgress {
     completedAt: null,
     lastAccessedAt: null,
   }
+}
+
+export interface QuizAttempt {
+  submittedAt: number   // ms epoch (Date.now())
+  score: number         // 0..total
+  total: number         // 1..5
+  perLesson: Array<{ lessonId: string; correct: boolean }>
 }

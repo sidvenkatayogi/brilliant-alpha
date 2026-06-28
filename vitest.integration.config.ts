@@ -8,5 +8,9 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/integration/**/*.test.ts'],
+    // Integration tests share ONE Firebase emulator project (demo-long-run). Running
+    // files concurrently causes clearFirestore() in one file's beforeEach to race
+    // against another file's just-seeded data. Serialize to eliminate that race.
+    fileParallelism: false,
   },
 })

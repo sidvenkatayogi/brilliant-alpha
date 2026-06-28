@@ -80,8 +80,6 @@
 
 ### Peer pressure is a great way to motivate adults to learn.
 
-### You need to invade an adult student's mind with learning, because they're too lazy to open a learning website.
-
 ### When students have no knowledge on a subject, is the perfect time to ask questions on it.
 
 ### Mature adults need child sized instruction.

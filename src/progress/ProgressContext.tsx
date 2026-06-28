@@ -16,12 +16,13 @@ import {
   ensureUserDoc,
   fetchAllProgress,
   saveLessonProgress,
-  updateEmailPrefs,
+  saveQuizAttempt,
   updateUserDoc,
 } from './firestore'
 import { saveMemberProgress } from '../cohort/firestore'
 import type { MemberProgress } from '../cohort/types'
-import { emptyProgress, type LessonProgress, type Milestone, type UserDoc } from './types'
+import { emptyProgress, type LessonProgress, type Milestone, type UserDoc, type QuizAttempt } from './types'
+import { scoreQuiz, nextMasteryAfterQuiz, type QuizQuestion, type QuizResult } from '../engine/quiz'
 
 interface ProgressContextValue {
   userDoc: UserDoc | null
@@ -40,11 +41,10 @@ interface ProgressContextValue {
   /** Reflect a server-side cohort assignment locally so the peer projection syncs. */
   setCohortId: (cohortId: string) => void
   /**
-   * Toggle the daily-quiz email preference. Updates local state optimistically so
-   * the UI reflects the change immediately, persists to Firestore, and reverts on
-   * failure. Rejects if the write fails so callers can surface an error.
+   * Score the quiz synchronously; fire-and-forget persistence (writes never block the UI).
+   * EC6: Firestore errors → console.error only, never thrown.
    */
-  setDailyQuizEnabled: (enabled: boolean) => Promise<void>
+  submitQuizAttempt(questions: QuizQuestion[], picks: number[]): QuizResult
 }
 
 const ProgressContext = createContext<ProgressContextValue | null>(null)
@@ -158,22 +158,57 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     setUserDoc((prev) => (prev && prev.cohortId !== cohortId ? { ...prev, cohortId } : prev))
   }, [])
 
-  const setDailyQuizEnabled = useCallback(
-    async (enabled: boolean) => {
-      if (!user) return
-      // Optimistic: flip local state now so the toggle animates immediately.
-      setUserDoc((prev) =>
-        prev ? { ...prev, emailPrefs: { ...prev.emailPrefs, dailyQuiz: enabled } } : prev,
-      )
-      try {
-        await updateEmailPrefs(user.uid, { dailyQuiz: enabled })
-      } catch (e) {
-        // Revert on failure so the UI never lies about the saved preference.
-        setUserDoc((prev) =>
-          prev ? { ...prev, emailPrefs: { ...prev.emailPrefs, dailyQuiz: !enabled } } : prev,
-        )
-        throw e
+  const submitQuizAttempt = useCallback(
+    (questions: QuizQuestion[], picks: number[]): QuizResult => {
+      const result = scoreQuiz(questions, picks)
+      if (!user) return result
+
+      const uid = user.uid
+      const attempt: QuizAttempt = {
+        submittedAt: Date.now(),
+        score: result.score,
+        total: result.total,
+        perLesson: result.perLesson,
       }
+
+      // Fire-and-forget — never block the UI on writes (EC6)
+      void (async () => {
+        try {
+          await saveQuizAttempt(uid, attempt)
+        } catch (e) {
+          console.error('saveQuizAttempt failed', e)
+        }
+
+        // Nudge mastery for each quizzed lesson (only if we have local progress for it)
+        for (const { lessonId, correct } of result.perLesson) {
+          const current = progressRef.current[lessonId]
+          if (!current) continue
+          const next = nextMasteryAfterQuiz(current.masteryScore, correct)
+          if (next === current.masteryScore) continue
+          const updated = { ...current, masteryScore: next }
+          try {
+            await saveLessonProgress(uid, updated)
+          } catch (e) {
+            console.error('saveLessonProgress (mastery nudge) failed', e)
+          }
+        }
+      })()
+
+      // Optimistically update local progress mastery so the UI reflects the nudge immediately
+      setProgressByLesson((prev) => {
+        const next = { ...prev }
+        for (const { lessonId, correct } of result.perLesson) {
+          const cur = prev[lessonId]
+          if (!cur) continue
+          const newMastery = nextMasteryAfterQuiz(cur.masteryScore, correct)
+          if (newMastery !== cur.masteryScore) {
+            next[lessonId] = { ...cur, masteryScore: newMastery }
+          }
+        }
+        return next
+      })
+
+      return result
     },
     [user],
   )
@@ -335,7 +370,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         restartLesson,
         completeLesson,
         setCohortId,
-        setDailyQuizEnabled,
+        submitQuizAttempt,
       }}
     >
       {children}

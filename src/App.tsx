@@ -8,6 +8,7 @@ import LessonRoute from './screens/LessonRoute'
 import CompletionScreen from './screens/CompletionScreen'
 import Profile from './screens/Profile'
 import Group from './screens/Group'
+import Quiz from './screens/Quiz'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -55,6 +56,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Group />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/quiz"
+        element={
+          <ProtectedRoute>
+            <Quiz />
           </ProtectedRoute>
         }
       />

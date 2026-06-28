@@ -1,5 +1,7 @@
 # PRD2 — "Long Run" v2: Scenario-Game Lesson Overhaul
 
+> **Note (2026-06-28):** The daily email-quiz feature (originally documented in the README) has been removed in favour of an in-app Practice quiz (`/quiz`). PRD3 covers the scenario-game lesson redesign only and is unaffected by that change.
+
 **This is a revision PRD, handed to Claude Code on top of the existing v1 codebase.**
 It overhauls **lesson design, widgets, and visual/motion direction only**. The engine, data model, auth, persistence, streaks, mastery, path, and "no AI anywhere" constraint are **unchanged** unless this document explicitly says otherwise.
 

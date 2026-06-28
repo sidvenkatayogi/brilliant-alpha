@@ -3,11 +3,12 @@ import {
   getDoc,
   setDoc,
   getDocs,
+  addDoc,
   collection,
   runTransaction,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
-import type { LessonProgress, UserDoc } from './types'
+import type { LessonProgress, UserDoc, QuizAttempt } from './types'
 
 // All Firestore I/O is isolated here. The UI never imports firestore directly.
 // Writes are awaited by callers only when they choose to; the player fires them
@@ -79,9 +80,7 @@ export async function saveLessonProgress(
   await setDoc(progressRef(uid, progress.lessonId), progress, { merge: true })
 }
 
-export async function updateEmailPrefs(
-  uid: string,
-  prefs: { dailyQuiz: boolean },
-): Promise<void> {
-  await setDoc(doc(db, 'users', uid), { emailPrefs: prefs }, { merge: true })
+export async function saveQuizAttempt(uid: string, attempt: QuizAttempt): Promise<void> {
+  await addDoc(collection(db, 'users', uid, 'quizAttempts'), attempt)
 }
+

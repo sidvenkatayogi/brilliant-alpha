@@ -6,7 +6,6 @@ import { useAuth } from '../auth/AuthContext'
 import { useProgress } from '../progress/ProgressContext'
 import { useCohort } from '../cohort/CohortContext'
 import PeerAvatars from '../cohort/PeerAvatars'
-import DailyQuizToggle from '../widgets/DailyQuizToggle'
 
 type State = 'locked' | 'available' | 'in_progress' | 'completed'
 
@@ -107,6 +106,20 @@ export default function Dashboard() {
           </span>
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={() => navigate('/quiz')}
+        data-testid="quiz-cta"
+        className="card mt-3 flex w-full items-center gap-3 text-left transition hover:ring-accent/40 active:scale-[0.99]"
+      >
+        <span className="text-lg">🧠</span>
+        <div className="min-w-0 flex-1">
+          <span className="block font-semibold text-ink">Practice quiz</span>
+          <span className="block text-sm text-slate-500">Test what you've learned</span>
+        </div>
+        <span className="text-slate-400">→</span>
+      </button>
 
       {continueTarget && (
         <button
@@ -223,7 +236,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      <DailyQuizToggle />
     </div>
   )
 }
