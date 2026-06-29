@@ -1,0 +1,260 @@
+### Owners
+
+- Siddhartha Venkatayogi siddhartha.venkatayogi@alphaaiengineering.com
+
+### Purpose
+
+- The purpose of this BrainLift is to develop a research-grounded point of view on how a self-directed STEM learning platform like Brilliant can maximize genuine long-term learning and sustained motivation. It is built on the belief that effective learning products should be designed around the science of how people actually learn and stay motivated — not around engagement metrics or the surface appearance of rigor — and that Brilliant's largest untapped levers are social/peer motivation, real-world relevance, and carefully sequenced bite-sized instruction.
+
+### In Scope
+
+- The cognitive and motivational science of learning: cognitive load, retrieval practice, spacing, interleaving, desirable difficulties, productive failure, and the learning-vs-performance distinction.
+- How these principles map onto Brilliant's product design: lesson structure, prequestions, feedback loops, achievements, and difficulty scaffolding.
+- Motivation theory (intrinsic motivation, Self-Determination Theory, the achievement→motivation relationship) and the role of peer/social dynamics for adult learners.
+- Brilliant's target audience, market position, and competitive landscape, used as context for product decisions.
+- Generating original insights (DOK 3) and Spiky POVs (DOK 4) about what Brilliant should change.
+
+### Out of Scope
+
+- Exam prep, credentialing, or certification design — Brilliant is positioned as enrichment and intuition-building, not test prep.
+- Authoring the actual STEM subject-matter content (the specific math/CS/physics curriculum itself).
+- Engineering and technical implementation details of the platform.
+- Non-STEM learning domains (e.g., language learning), except where they serve as competitive comparison (e.g., Duolingo's habit loop).
+- General K–12 classroom instruction, except where classroom evidence directly informs platform design.
+
+---
+
+## Experts
+
+- **Robert A. Bjork & Elizabeth L. Bjork**
+   - **Who:** Distinguished Research Professors of Psychology, UCLA; directors of the Bjork Learning and Forgetting Lab.
+   - **Focus:** "Desirable difficulties" (spacing, interleaving, generation, retrieval) and the storage-strength vs retrieval-strength distinction (New Theory of Disuse); the gap between learning and performance.
+   - **Why Follow:** Their framework is the backbone of this BrainLift's argument that conditions which *slow apparent progress* (and which learners dislike) produce better long-term retention — directly relevant to how Brilliant should design difficulty and not over-optimize for in-the-moment performance.
+   - **Where:** https://bjorklab.psych.ucla.edu/
+
+- **Henry L. Roediger III**
+   - **Who:** James S. McDonnell Distinguished University Professor of Psychology, Washington University in St. Louis.
+   - **Focus:** The testing/retrieval effect — retrieval practice as a stronger driver of long-term retention than restudy, and the metacognitive illusions that make learners prefer restudy.
+   - **Why Follow:** Grounds the case for problem-first, retrieval-heavy lesson loops over passive re-reading, and explains why users may *feel* they learn less from the better approach.
+   - **Where:** https://psychnet.wustl.edu/memory/people/henry-l-roediger-iii/
+
+- **John Sweller**
+   - **Who:** Emeritus Professor, University of New South Wales.
+   - **Focus:** Cognitive Load Theory; the worked-example effect; expertise reversal.
+   - **Why Follow:** Explains *why* undirected struggle and overly dense, explanation-heavy lessons backfire for novices, and why bite-sized, scaffolded, guided instruction works — central to the lesson-design and prequestion insights.
+   - **Where:** https://research.unsw.edu.au/people/emeritus-professor-john-sweller
+
+- **Daniel T. Willingham**
+   - **Who:** Professor of Psychology, University of Virginia; cognitive scientist and education author.
+   - **Focus:** How thinking and memory work, why critical thinking is hard to teach, and the domain-specificity of transfer.
+   - **Why Follow:** Anchors the position that critical thinking and transfer depend on deep, domain-specific knowledge — shaping how Brilliant should sequence content so skills actually transfer.
+   - **Where:** http://www.danielwillingham.com/
+
+- **John Dunlosky**
+   - **Who:** Professor of Psychology, Kent State University.
+   - **Focus:** Evidence-ranked evaluation of study techniques (practice testing and distributed practice as highest utility; rereading/highlighting as lowest).
+   - **Why Follow:** Provides a defensible ranking for which learning mechanics Brilliant should build around versus avoid.
+   - **Where:** https://www.kent.edu/psychology/profile/john-dunlosky
+
+- **Carl Hendrick**
+   - **Who:** Professor of Evidence-Based Education; author and translator of learning research for practitioners.
+   - **Focus:** Bridging cognitive science and real instruction — struggle/guessing before learning, retrieval as learning (not just testing), motivation following achievement, and the importance of cumulative curriculum order.
+   - **Why Follow:** Source of several core framings in this BrainLift, especially "encourage *with* achievement, not *to* achievement" and that engagement is a poor proxy for learning.
+   - **Where:** Search "Carl Hendrick" on Google Scholar / X for current lectures and writing.
+
+- **Manu Kapur**
+   - **Who:** Professor of Learning Sciences and Higher Education, ETH Zurich.
+   - **Focus:** Productive failure — attempt-before-instruction yielding deeper conceptual understanding when consolidation follows.
+   - **Why Follow:** Supports Brilliant's "attempt → reveal explanation → build on it" loop and clarifies the conditions under which struggle is productive rather than wasteful.
+   - **Where:** Search "Manu Kapur productive failure" on Google Scholar.
+
+- **Sue Khim**
+   - **Who:** Co-founder and CEO of Brilliant.org.
+   - **Focus:** Brilliant's stated design philosophy — intrinsic drive, transferable problem-solving, destigmatizing failure, problem-first sequencing, no video lectures.
+   - **Why Follow:** The primary-source articulation of Brilliant's product intent, which this BrainLift evaluates and pushes against.
+   - **Where:** Brilliant.org; her public talks and interviews.
+
+---
+
+## DOK 4
+
+### Peer pressure is a great way to motivate adults to learn.
+
+### When students have no knowledge on a subject, is the perfect time to ask questions on it.
+
+### Mature adults need child sized instruction.
+
+---
+
+## DOK 3: Insights
+
+### Often peer motivations and pressure is associated with teenagers and children. These motivations still extend to adults, who would like to show off their educational achievements earned on the platform. This effect is maximized when adult students are face to face with each other as education earns them to ability to join the conversation.
+
+### Brilliant's issue is that it's largely disconnected from the outside world. Even if users are intrinsically motivated to learn STEM topics, these topics also have a large benefit of indicators of intelligence and pathways to careers. Employing such motivations can capture a larger user base and retain existing users for longer.
+
+### Giving students problems and just telling them to solve it is detrimental to their learning, but only when students spend a lot of time on questions. That's why prequestions should be handled carefully. They should strike the correct balance between priming/getting students to feel the struggle of learning, and spending too much brain power on them. Pre-questions should feel no stakes and they should not reward nor discourage students for accuracy.
+
+### Lessons that are in depth, problem heavy, and explanation heavy may seem like well put together, but they can be the opposite. Students learn best in bite size pieces and lessons should reflect that to effiicently scaffold understanding.
+
+### Giving students early achievements is not going easy on them. It actually sets them up to be even more successful and motivated to learn as achievement leads to motivation.
+---
+
+## Knowledge Tree:
+
+### Category 1: Cognitive Architecture & Load (the "why")
+
+- **Subcategory 1.1 — Working memory as the bottleneck**
+   - **Source:** Sweller, J. (1988). *Cognitive Load During Problem Solving: Effects on Learning.* Cognitive Science, 12(2), 257–285.
+      - **DOK 1 – Facts:**
+         - Novices solve problems by means-ends analysis (working backward from the goal, setting subgoals), which is highly demanding of working memory.
+         - That demand leaves processing capacity "consequently unavailable for schema acquisition."
+         - Worked-example studies (Sweller & Cooper 1985; Cooper & Sweller 1987) show learners taught via worked examples learn faster and transfer better than those who solve equivalent problems.
+         - The worked-example effect reverses when examples overload working memory and as expertise grows (expertise-reversal).
+      - **DOK 2 – Summary:** Not all struggle is good, as undirected struggle/learning leads to unavailability of processing capacity. Worked examples work better to teach students than telling them to solve a problem, this is true until the examples overload students.
+      - **Link to source:** Cognitive Science journal (1988); author page: https://research.unsw.edu.au/people/emeritus-professor-john-sweller
+
+- **Subcategory 1.2 — Why discovery fails for novices**
+   - **Source:** Kirschner, P. A., Sweller, J., & Clark, R. E. (2006). *Why Minimal Guidance During Instruction Does Not Work.* Educational Psychologist, 41(2), 75–86.
+      - **DOK 1 – Facts:**
+         - Discovery, problem-based, inquiry, experiential, and constructivist learning are treated as "pedagogically equivalent" and consistently less effective/efficient than direct, explicit guidance for novices.
+         - Mechanism: unguided search overwhelms working memory with activity that builds no long-term schema.
+         - Expertise = possession of domain-specific schemas, not generic problem-solving prowess.
+         - Critics (Hmelo-Silver; Schmidt et al.) charge the authors conflate genuinely unguided discovery with well-scaffolded PBL/inquiry.
+      - **DOK 2 – Summary:** Providing students guides and structure to example problems instead of open problem solving is a more efficient way of teaching. Explicit guidance is better than telling students to solve and explore a problem themselves.
+      - **Link to source:** Educational Psychologist (2006) — locate via Google Scholar.
+
+### Category 2: Retrieval & Spacing (the strongest-evidenced core)
+
+- **Subcategory 2.4 — Government-graded recommendations**
+   - **Source:** Pashler, H., et al. (2007). *Organizing Instruction and Study to Improve Student Learning* (IES Practice Guide, NCER).
+      - **DOK 1 – Facts:**
+         - Seven recommendations, each tied to a graded evidence level (Strong / Moderate / Low).
+         - *Strong:* (5b) use quizzes/games to re-expose students to key content; (7) help students build explanations via deep questioning.
+         - *Moderate:* space learning over time; interleave worked examples with problem-solving; combine graphics with verbal descriptions; connect abstract and concrete representations.
+         - *Low:* pre-questions; delayed judgments of learning; using quizzes diagnostically — several rest on lab studies of college students rather than classroom RCTs.
+      - **DOK 2 – Summary:** Re-exposing content to students via quizzes and games is a strong way to improve learning, alongside helping students build explanations through guided questioning on key content. Visual + text is a good way to connect abstract and concrete representations and help build learned connections in students. Note that pre-questions are graded *Low* evidence — supporting the insight that prequestions are a promising lever but must be handled carefully.
+      - **Link to source:** IES / What Works Clearinghouse (ies.ed.gov), 2007.
+
+- **Subcategory 2.5 — The pretesting effect (guessing before instruction)**
+   - **Source:** Synthesis essay, *Redesigning Self-Directed STEM Learning* (2026); underlying pretesting research (e.g., Richland, Kornell & Bjork, 2009; Kornell, Hays & Bjork, 2009 — *Unsuccessful retrieval attempts enhance subsequent learning*).
+      - **DOK 1 – Facts:**
+         - Attempting to answer questions about not-yet-learned material — and failing — improves long-term retention of that material once it is taught, relative to spending the same time studying it.
+         - The effect holds even though initial guesses are almost universally wrong (demonstrated with weakly-associated word pairs and complex science essays).
+         - Proposed mechanisms: attention direction (the question primes the brain to search subsequent instruction for the answer), activation of related semantic networks (a framework the new info attaches to), and prediction-error learning (corrective feedback updates internal models, deepening encoding).
+         - Boundary conditions / tension: benefit is contingent on the attempt being brief, low-stakes, and immediately followed by corrective instruction. The IES Practice Guide (see 2.4) graded pre-questions as *Low* evidence, so this is a promising but not strongly-graded lever.
+      - **DOK 2 – Summary:** Guessing before instruction primes encoding, but only when calibrated: short, no-stakes (no reward or penalty for accuracy), and immediately resolved with the explanation. If a learner dwells too long on an unanswerable prequestion, the same mechanism flips into working-memory depletion and the risk of encoding wrong schemas.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis); pretesting literature via Google Scholar.
+
+### Category 5: Instruction & Teaching Quality
+
+- **Subcategory 5.1 — The master-teacher playbook**
+   - **Source:** Rosenshine, B. (2012). *Principles of Instruction.* American Educator, Spring 2012.
+      - **DOK 1 – Facts:**
+         - Ten principles: daily review; small steps with practice; many questions/checks; models & worked examples; guided practice; check understanding; ~80% success rate in guided practice; scaffolds; independent practice to automaticity; weekly/monthly review.
+         - Most effective math teachers spent ~23 of 40 minutes on lecture/demonstration/questioning/worked examples vs ~11 for the least effective.
+         - In a 4th-grade study, the most successful teachers had an 82% success rate vs 73% for the least successful.
+         - Classes with weekly quizzes outperformed those with only one or two quizzes per term.
+      - **DOK 2 – Summary:** Make bite sized and frequent lessons so students can use the lessons as scaffolding to understanding.
+      - **Link to source:** American Educator (Spring 2012) — AFT.
+
+- **Subcategory 5.2 — What actually makes great teaching**
+   - **Source:** Coe, R., Aloisi, C., Higgins, S., & Elliot Major, L. (2014). *What Makes Great Teaching?* Sutton Trust / Durham University.
+      - **DOK 1 – Facts:**
+         - Review of 200+ pieces of research; six components graded by evidence.
+         - *Strong evidence:* (1) pedagogical content knowledge; (2) quality of instruction (questioning, assessment, reviewing, modeling, scaffolding, intelligent practice).
+         - Ineffective practices flagged: lavish/misdirected praise; discovery for novices; ability grouping; rereading/highlighting; addressing confidence/motivation before teaching content (impact "close to zero").
+         - Magnitude: poorer pupils gain ~1.5 years' learning with very effective teachers vs ~0.5 years with poorly performing ones.
+      - **DOK 2 – Summary:** The two best-evidenced components of great teaching are content knowledge and quality of instruction. Addressing motivation/confidence before teaching content has near-zero impact — supporting the insight that achievement should lead motivation, not the reverse. Measurement each has limits and should be triangulated, not used as a single gauge.
+      - **Link to source:** Sutton Trust / Evidence Based Education (2014).
+
+- **Subcategory 5.3 — Microlearning as cognitive scaffolding**
+   - **Source:** Synthesis essay, *Redesigning Self-Directed STEM Learning* (2026); built on Cognitive Load Theory (Sweller) and Rosenshine's *Principles of Instruction*.
+      - **DOK 1 – Facts:**
+         - Microlearning segments material into focused units that often take fewer than five minutes, each targeting a single learning objective.
+         - The rationale is structural (working-memory limits), not merely a concession to short attention spans; single-objective units minimize extraneous load and direct all processing capacity toward schema acquisition.
+         - Aligns with master-teaching mechanics: present new material in very small steps followed immediately by guided practice; introduce greater complexity and less guidance only as expertise grows (expertise-reversal).
+         - Bite-sized, mobile-formatted units also lower the friction of initiating a session.
+      - **DOK 2 – Summary:** For novices — including mature adults learning an unfamiliar domain — bite-sized, single-objective units are a working-memory necessity, not "going easy." Expand step size and strip scaffolds only once foundational schemas are in place.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis).
+
+### Category 6: Business & Product
+
+   - **Subcategory 6.1: Target Audience & Catalog**
+      - **Source: Brilliant.org Product Pages**
+         - **DOK 1 – Facts:**
+            - Target: ambitious STEM learners "aged 10 to 110" — students, self-directed adult learners, professionals
+            - Positioned as enrichment and intuition-building, *not* exam prep or credentialing
+            - Catalog: arithmetic → linear algebra, calculus, differential equations, probability/statistics, classical mechanics, electromagnetism, quantum topics, algorithms/data structures, Python, data science, applied AI
+         - **DOK 2 – Summary:** 
+            - Brilliant's goal is to teach self motivated learners STEM topics. In these topics, they want to build intuition and beginner level understanding. Though it may lessons may be simple and not rigorous as others for exam prep are, they still teach somewhat advanced level topics through their platform.
+
+   - **Subcategory 6.2: Competitive Landscape**
+      - **Source: Research analysis**
+         - **DOK 1 – Facts:**
+            - vs. **Khan Academy**: free, video-first, broad K-12 + test prep, nonprofit. Brilliant trades breadth and free access for active, conceptual depth and paid polish. Many users combine both.
+            - vs. **Coursera/edX/Udacity**: Brilliant offers no university certificates or career credentials, but lower cost and higher interactivity.
+            - vs. **Duolingo**: Brilliant borrows the daily-habit gamification loop but is "more forgiving" and less characterful; streak mechanics are lighter.
+            - vs. **MasterClass**: entirely different — inspiration/celebrity entertainment vs. genuine skill-building.
+            - Market position: Brilliant leads "coding/STEM-education" queries in 5W's 2026 EdTech AI Visibility Index; top 10 overall (Khan Academy, Duolingo, Coursera lead overall).
+         - **DOK 2 – Summary:**
+            - Compared to their competition, Brilliant stands out with its focus on STEM topics and push away from video based learning. The closest platform to Brilliant is Duolingo, but there is still uniqueness as Brilliant has a different vibe and user experience, most likely targeted to a wider audience "10 to 110 years old". Brilliant lacks any reward or outcome of completing their lessons, unlike competitors who offer credentials or certificates. Even Duolingo has a popular trend of sharing your streak.
+
+### Category 7: Pedagogy & Learning Science
+
+   - **Subcategory 7.1: Core Design Principles**
+      - **Source: Sue Khim statements + Research analysis**
+         - **DOK 1 – Facts:**
+            - Stated principles: foster intrinsic drive, develop transferable problem-solving, destigmatize failure
+            - Mechanics: problem-first sequencing, interactive visualizations/simulations, immediate corrective feedback, 5–15 min bite-sized lessons, scaffolded difficulty
+            - No video lectures — deliberate, 13-year-consistent design choice
+            - "Attempt → reveal explanation → build on it" loop is the core interaction pattern
+
+   - **Subcategory 7.2: Supporting Research (What Works)**
+      - **Source: Freeman et al. (2014, PNAS); Roediger & Karpicke (2006); Slamecka & Graf (1978); Bjork & Bjork (2011); Kapur (2008); Mayer (CTML); Deci & Ryan (SDT)**
+         - **DOK 1 – Facts:**
+            - Freeman et al. (2014) meta-analysis of 225 STEM studies: active learning → +0.47 SD on exams; failure rates fell from 33.8% (lecture) to 21.8% (active learning)
+            - **Generation effect** (Slamecka & Graf, 1978): self-generated answers better retained than read answers; meta-analytic d ≈ 0.40
+            - **Testing/retrieval effect** (Roediger & Karpicke, 2006): retrieval practice strengthens long-term retention more than restudy
+            - **Desirable difficulties** (Bjork & Bjork, 2011): spacing, interleaving, generation, and retrieval slow apparent progress but improve long-term retention via storage-strength/retrieval-strength distinction
+            - **Productive failure** (Kapur, 2008; Sinha & Kapur, 2021 meta-analysis, 53 studies): attempt-before-instruction yields deeper conceptual understanding *if* consolidation follows
+            - **Mayer's CTML**: learning from words + pictures > words alone; coherence principle minimizes extraneous load — Brilliant's minimalist, animation-rich UI aligns
+            - **SDT** (Deci & Ryan): intrinsic motivation requires autonomy, competence, relatedness — Brilliant serves autonomy + competence; relatedness is weak
+            - Bloom's mastery learning / "2 sigma problem" (1984): Koji is Brilliant's attempt to chase tutoring-level personalization at scale
+         - **DOK 2 – Summary:** Active learning with students interacting in their studies shows performance gains in exams. Offering solutions before the student thinks it through is suboptimal. Students should try to answer before learning and after learning and experience the struggle. Even if thorough strategies like spacing, interleaving, and retrieval take longer to complete the same amount of content, it develops better long term understanding and retention. Visual instruction provides benefits over solely text based approaches. Brilliant is good at covering autonomy and competence in their self guided lessons, but lacks relatedness to peers in their platform, all 3 of which are important to intrinsic motivation.
+     - **Source: Lecture from Carl Hendrick**
+        - **DOK 1 - Facts:**
+            - Guessing before learning is still beneficial because the struggle prepares the mind
+            - Instruction should start at the sentence level, not multi paragraph essay
+            - Working memory doesn’t actually work very well
+            - Retrieval isn’t a test of learning; it is learning —> retrieve what you were instructed a week or 2 later, and that rebuilds the knowledge. Forget again and then you retrieve again. only then can long term memory be affected
+            - You can’t connect the dots if you don’t have any - Its costly to know start and end and figure out the path - Understanding is remembering in disguise
+            - Motivations matters but not as much as you think - motivation doesn’t always lead to achievement, achievement often leads to motivation
+            - Transfer: skills are largely domain specific
+            - Learning and performance are not the same - engagement is a poor proxy indicator of learning
+            - Vague instruction means vague understanding- the order your curriculum is in is important (cumulative)
+        - **DOK 2 – Summary:** Struggle is good for students because that's where the learning happens. At the same time, struggling in the wrong places can lead to work spent inefficiently. Give students structure to critically think through problems. Encourage the user with achievement, not to achievement. Make sure your curriculum is well thought through.
+
+### Category 9: Social Motivation & Signaling (the outside-world lever)
+
+- **Subcategory 9.1 — Cohort accountability vs. self-paced isolation**
+   - **Source:** Synthesis essay *Redesigning Self-Directed STEM Learning* (2026); SDT "relatedness" (Deci & Ryan); industry completion-rate analyses.
+      - **DOK 1 – Facts:**
+         - Self-paced MOOCs report roughly 3%–12.6% completion; general self-paced courses ~10%–20%.
+         - Scheduled cohorts with no live interaction report ~64%; highly interactive cohort-based courses ~85%–96%.
+         - Mechanism: SDT's *relatedness* plus social accountability — visible peer progress and shared deadlines create external accountability that counters indefinite procrastination.
+         - Caveat: cohort completion figures frequently come from industry/marketing sources rather than RCTs, and self-selection (people who pay for and commit to cohorts differ from free self-paced users) likely inflates the apparent gap. Treat exact percentages as directional, not precise.
+      - **DOK 2 – Summary:** Social accountability and visible peer progress are associated with far higher completion than isolated self-paced study. A self-directed platform can *simulate* the cohort effect with asynchronous social proof, peer-progress markers, shared time-boxed tracks, and leaderboards — making the absence of peers feel costly. Hold the headline percentages loosely.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis).
+
+- **Subcategory 9.2 — Education as signaling; micro-credentials**
+   - **Source:** Bryan Caplan, Signaling Theory (*The Case Against Education*, 2018); via synthesis essay *Redesigning Self-Directed STEM Learning* (2026).
+      - **DOK 1 – Facts:**
+         - Signaling theory holds that a large share of education's wage premium reflects *signaling* — reliably advertising intelligence, conscientiousness, and conformity — rather than human capital (skills actually acquired).
+         - Caplan's high-end estimate attributes up to ~80% of the financial return to signaling; this figure is contested and sits at the upper bound of the debate.
+         - Adults pursue learning partly for prestige, status, and career advancement, not solely self-edification — they want to *broadcast* achievement.
+         - Shareable, metadata-rich micro-credentials / digital badges (exportable to professional networks like LinkedIn) convert private cognitive effort into liquid public/professional capital.
+         - Strategic gap: a platform with no recognizable way to broadcast a completed achievement suppresses one of its strongest adult motivators.
+      - **DOK 2 – Summary:** Adult learning carries large signaling value; verified, shareable micro-credentials let learners project competence to peers and employers, tying intrinsic curiosity to extrinsic professional reward and directly addressing Brilliant's "disconnected from the outside world" gap. Caplan's ~80% figure is contested and should be cited as an upper-bound claim, not consensus.
+      - **Link to source:** *Redesigning Self-Directed STEM Learning* (2026, internal synthesis); Caplan, *The Case Against Education* (2018).
+
+---

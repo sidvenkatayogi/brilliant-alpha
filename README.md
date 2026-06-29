@@ -12,8 +12,9 @@ beat through a single living world that persists across its concept, predict, in
 
 **Persona — Maya, 29, product manager / curious self-learner.** She learns in ~10-minute phone sessions,
 bounces off symbol-heavy textbooks, and loves counterintuitive "wait, *what?*" moments. Every design call is
-resolved for her: shorter, more visual, more real-world, less notation. **No AI anywhere** — every check and
-every line of feedback is hand-authored and runs client-side.
+resolved for her: shorter, more visual, more real-world, less notation. **The lessons use no AI** — every lesson
+check and every line of feedback is hand-authored and runs client-side. (AI appears only in the Phase 2 cohort +
+practice layer, below — never in the lessons themselves.)
 
 ## The five lessons (scenario games)
 
@@ -57,15 +58,15 @@ exactly as before (independent steps).
 ```
 src/
   content/      types.ts (the model, incl. Scenario) · loadLessons.ts · lessons/*.json
-  engine/       checkAnswer · selectFeedback · mastery · streak   (pure, synchronous, no network)
+  engine/       checkAnswer · selectFeedback · mastery · streak · quiz   (pure, synchronous, no network)
   widgets/      registry · InsuranceDesk · RedundancyBay · SpamInbox · ScreeningClinic · BayesFormula · CasinoFloor
   player/       LessonPlayer · StepRenderer · steps/* · FeedbackPanel · WidgetHost · scenario/ScenarioContext
   auth/         AuthContext · AuthForm · ProtectedRoute
   progress/     ProgressContext · firestore.ts · types.ts
-  cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · calendar · cohortName · scheduling · avatar · PeerAvatars
-  screens/      Dashboard · LessonRoute · CompletionScreen · Profile · Group
+  cohort/       CohortContext · firestore.ts · types · levelBand · weekId · slots · overlap · peerProgress · outline · practiceQuiz · calendar · cohortName · scheduling · avatar · PeerAvatars
+  screens/      Dashboard · LessonRoute · CompletionScreen · Profile · Group · Quiz
   lib/          firebase.ts (Auth + Firestore init) · api.ts (authed fetch to /api)
-api/            Vercel serverless functions: cohort.ts (POST /api/cohort — assignCohort | generateOutline | getAnswerKey)
+api/            Vercel serverless function: cohort.ts (POST /api/cohort — assignCohort | generateOutline | getAnswerKey | generatePracticeQuiz)
 ```
 
 **Key guarantees**
@@ -80,9 +81,10 @@ api/            Vercel serverless functions: cohort.ts (POST /api/cohort — ass
 
 ## Phase 2 — Cohorts, weekly meetings & AI facilitation
 
-Phase 2 turns the solo learner into a small **book-club cohort** and adds the app's **first and only AI feature**.
+Phase 2 turns the solo learner into a small **book-club cohort** and adds the app's **AI features**.
 The Phase 1 learning path is unchanged: lessons still teach with zero model calls, and feedback is hand-authored.
-AI touches the **social layer only** — it structures a human discussion, it never teaches probability.
+AI touches the **cohort + practice layer only** — it structures a human discussion and generates optional practice
+quizzes; it never teaches the core lessons.
 
 All under a **Group** tab (`/group`), reached from the **View your group / Join a group** CTA on the dashboard:
 
@@ -116,9 +118,9 @@ All under a **Group** tab (`/group`), reached from the **View your group / Join 
   All helpers are inlined in this one file — the Vercel bundler does not reliably resolve relative imports under this
   repo's ESM setup, so there is no `api/_lib/` tree; pure helpers are exported directly for unit tests.
 
-Each function verifies identity (Firebase ID token or HMAC token) with the Admin SDK; the client calls them with
-`fetch` (`src/lib/api.ts`). Firebase Auth + Firestore remain the data backend. The OpenAI call is **stubbed against
-the emulator**, so tests and local runs never hit the real API.
+The function verifies the caller's Firebase ID token with the Admin SDK; the client calls it with `fetch`
+(`src/lib/api.ts`). Firebase Auth + Firestore remain the data backend. The OpenAI calls are **stubbed against the
+emulator**, so tests and local runs never hit the real API.
 
 ## Tech stack
 
@@ -170,7 +172,7 @@ npm run test:e2e             # Playwright — MVP + Group scenarios (auto-starts
   dispatch, widget logic, a content guard across the lessons, and (Phase 2) `levelBand`, overlap math incl. a
   **two-timezone** test, peer-progress state machine, outline parse/fallback, cohort-name generator, `allApproved`, and
   the serverless logic in `api/cohort.ts` (cohort matching, prompt construction, outline cache / quiz split / fallback
-  paths, and the answer-key verification layer).
+  paths, the answer-key verification layer, and the AI practice-quiz generation + deterministic fallback).
 - **Integration (emulator):** Phase 1 cross-user rules + the Phase 2 cohort privacy boundary (non-members blocked, no
   cross-member writes, no client `memberUids` write, projection has no forbidden fields, quiz answer key is server-only).
 - **E2E (Playwright):** Phase 1 flows **plus** Phase 2 — join via the CTA, propose → approve → lock + link, outline +
